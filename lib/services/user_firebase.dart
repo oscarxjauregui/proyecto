@@ -29,4 +29,9 @@ class UsersFirebase {
         await _usersCollection!.where('email', isEqualTo: email).get();
     return querySnapshot;
   }
+
+  Future<DocumentSnapshot> consultarPorId(String id) async {
+    final documentSnapshot = await _usersCollection!.doc(id).get();
+    return documentSnapshot;
+  }
 }
