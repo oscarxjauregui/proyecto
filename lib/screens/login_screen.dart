@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
@@ -8,7 +7,7 @@ import 'package:proyecto/screens/Home_cliente_screen.dart';
 import 'package:proyecto/screens/home_man_screen.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
 import 'package:proyecto/services/email_auth_firebase.dart';
-import 'package:proyecto/services/user_firebase.dart'; // Importa la clase UsersFirebase
+import 'package:proyecto/services/user_firebase.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key});
@@ -100,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 );
-                                // Puedes navegar a otra pantalla si el rol es 'Manicurista'
                               } else {
                                 print('Error: Rol de usuario no reconocido');
                               }
@@ -158,19 +156,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  signInWithGoogle() async {
-    GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+  Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
 
-    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
 
-    AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
 
-    UserCredential userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
-
-    print(userCredential.user?.displayName);
+        // Handle success, e.g., navigate to a new page
+        print(userCredential.user?.displayName);
+      } else {
+        // Handle error, e.g., show snackbar
+        print('Error al iniciar sesión con Google');
+      }
+    } catch (e) {
+      print('Error al iniciar sesión con Google: $e');
+    }
   }
 }
