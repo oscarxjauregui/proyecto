@@ -7,8 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:proyecto/models/custom_drawer.dart';
 import 'package:proyecto/screens/login_screen.dart';
 import 'package:proyecto/screens/myuser_screen.dart';
+import 'package:proyecto/screens/search_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 import 'package:proyecto/services/publication_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
@@ -108,7 +110,31 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Inicio'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchScreen(
+                    myIdUser: widget.myIdUser,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
+      // drawer: CustomDrawer(
+      //   myIdUser: widget.myIdUser,
+      //   userName: userName,
+      //   userEmail: userEmail,
+      //   avatarUrl: avatarUrl,
+      //   onMenuItemTap: (index) {
+      //     Navigator.pop(context);
+      //   },
+      // ),
       drawer: Drawer(
         child: ListView(
           children: [
@@ -130,6 +156,66 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               leading: Icon(Icons.person),
               title: Text('Mi perfil'),
               subtitle: Text('Ver mi perfil'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyUserScreen(
+                      userId: widget.myIdUser,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.message_outlined),
+              title: Text('Mensajes'),
+              subtitle: Text('ver los mensajes'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyUserScreen(
+                      userId: widget.myIdUser,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.date_range_outlined),
+              title: Text('Citas'),
+              subtitle: Text('Ver mis citas'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyUserScreen(
+                      userId: widget.myIdUser,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.groups),
+              title: Text('Grupos'),
+              subtitle: Text('Ver todos los grupos'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyUserScreen(
+                      userId: widget.myIdUser,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.groups_outlined),
+              title: Text('Mis grupos'),
+              subtitle: Text('Ver mis grupos'),
               onTap: () {
                 Navigator.push(
                   context,
@@ -332,7 +418,12 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                         radius: 20,
                         backgroundImage:
                             avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                        child: avatarUrl == null ? Icon(Icons.person, size: 40,) : null,
+                        child: avatarUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 40,
+                              )
+                            : null,
                       ),
                       SizedBox(width: 10),
                       Column(
