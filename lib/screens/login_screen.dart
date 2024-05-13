@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => HomeManScreen(
+                                    builder: (context) => HomeClienteScreen(
                                       myIdUser: userId,
                                     ),
                                   ),

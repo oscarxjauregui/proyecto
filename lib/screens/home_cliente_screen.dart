@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -66,39 +68,39 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   }
 
   Future<void> _uploadAndSavePublication({String? description}) async {
-    if (_image != null || description != null) {
-      final storage = FirebaseStorage.instance;
-      final Reference storageReference =
-          storage.ref().child('publicaciones/${DateTime.now()}.png');
-      final UploadTask uploadTask = storageReference.putFile(_image!);
-
-      await uploadTask.whenComplete(() async {
-        final imageUrl = await storageReference.getDownloadURL();
-        final now = DateTime.now();
-        final publicationData = {
-          'idUser': widget.myIdUser,
-          'descripcion': description ?? '',
-          'fecha': now.toIso8601String(),
-          'imageUrl': imageUrl,
-        };
-
-        // Guardar la publicación en Firestore
-        await PublicationFirebase().guardar(publicationData);
-
-        // Mostrar un mensaje de éxito
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Publicación realizada con éxito')),
-        );
-      });
-    } else {
+    if (_image == null && (description == null || description.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Por favor, selecciona una imagen o ingresa una descripción',
+            'Por favor, selecciona una imagen o ingresa una descripción antes de publicar.',
           ),
         ),
       );
+      return;
     }
+    final storage = FirebaseStorage.instance;
+    final Reference storageReference =
+        storage.ref().child('publicaciones/${DateTime.now()}.png');
+    String? imageUrl;
+    if (_image != null) {
+      final UploadTask uploadTask = storageReference.putFile(_image!);
+      await uploadTask.whenComplete(() async {
+        imageUrl = await storageReference.getDownloadURL();
+      });
+    }
+    final now = DateTime.now();
+    final publicationData = {
+      'idUser': widget.myIdUser,
+      'descripcion': description ?? '',
+      'fecha': now.toIso8601String(),
+      'imageUrl': imageUrl,
+    };
+
+    await PublicationFirebase().guardar(publicationData);
+    _refreshPage();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Publicación realizada con éxito')),
+    );
   }
 
   @override
@@ -231,12 +233,25 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     _uploadAndSavePublication(
                       description: _descriptionController.text.trim(),
                     );
+                    //_refreshPage();
                   },
                   child: Text('Publicar'),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  _refreshPage() async {
+    await Future.delayed(Duration(seconds: 1));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeClienteScreen(
+          myIdUser: widget.myIdUser,
         ),
       ),
     );
@@ -252,6 +267,12 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           return Center(child: Text('Error al cargar las publicaciones'));
         } else {
           final publicaciones = snapshot.data ?? [];
+          publicaciones.sort((a, b) {
+            // Ordena por fecha descendente
+            DateTime dateA = DateTime.parse(a['fecha']);
+            DateTime dateB = DateTime.parse(b['fecha']);
+            return dateB.compareTo(dateA);
+          });
           return ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
@@ -278,11 +299,19 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
         } else if (snapshot.hasError) {
           return Text('Error al cargar el usuario o el avatar');
         } else {
-          final userData = snapshot.data![0].data() as Map<String, dynamic>;
-          final avatarData = snapshot.data![1].data() as Map<String, dynamic>;
+          // Verificar si snapshot.data es nulo
+          if (snapshot.data == null) {
+            return Text('Datos nulos');
+          }
 
-          final nombreUsuario = userData['nombre'] ?? 'Usuario desconocido';
-          final avatarUrl = avatarData['imageUrl'] ?? '';
+          final userData = snapshot.data![0]?.data() as Map<String,
+              dynamic>?; // Usar ? para evitar errores si userData es nulo
+          final avatarData = snapshot.data![1]?.data() as Map<String,
+              dynamic>?; // Usar ? para evitar errores si avatarData es nulo
+
+          final nombreUsuario = userData?['nombre'] ?? 'Usuario desconocido';
+          final rolUsuario = userData?['rol'] ?? 'Rol desconocido';
+          final avatarUrl = avatarData?['imageUrl'];
 
           // Formatea la fecha
           final fecha = DateTime.parse(publicacion['fecha']);
@@ -301,18 +330,32 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundImage: NetworkImage(avatarUrl),
+                        backgroundImage:
+                            avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                        child: avatarUrl == null ? Icon(Icons.person, size: 40,) : null,
                       ),
                       SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            nombreUsuario,
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            children: [
+                              Text(
+                                nombreUsuario,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                rolUsuario,
+                                style: TextStyle(
+                                    fontStyle: FontStyle.normal, fontSize: 12),
+                              ),
+                            ],
                           ),
                           Text(
-                              formattedDate), // Usa el formato de fecha formateado
+                            formattedDate,
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                     ],
