@@ -25,12 +25,33 @@ class PublicationFirebase {
         .add(data);
   }
 
+  Future<void> guardarEnClase(Map<String, dynamic> data) async {
+    await FirebaseFirestore.instance
+        .collection('clase-publicaciones')
+        .add(data);
+  }
+
   // Método para obtener publicaciones de un grupo específico
   Future<List<Map<String, dynamic>>> obtenerPublicacionesDeGrupo(
-      String idGroup) async {
+      String classId) async {
     final querySnapshot = await FirebaseFirestore.instance
         .collection('grupo-publicaciones')
-        .where('idGroup', isEqualTo: idGroup)
+        .where('classId', isEqualTo: classId)
+        .get();
+
+    return querySnapshot.docs
+        .map((doc) => {
+              ...doc.data(),
+              'id': doc.id, // Incluye el ID del documento
+            } as Map<String, dynamic>)
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerPublicacionesDeClase(
+      String classId) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('clase-publicaciones')
+        .where('classId', isEqualTo: classId)
         .get();
 
     return querySnapshot.docs

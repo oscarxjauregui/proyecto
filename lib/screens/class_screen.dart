@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:proyecto/screens/class_main_screen.dart';
 import 'package:proyecto/screens/group_main_screen.dart';
 
 class ClassScreen extends StatefulWidget {
@@ -101,7 +102,7 @@ class _ClassScreenState extends State<ClassScreen> {
     final String classDescription = _classDescriptionController.text.trim();
     if (className.isNotEmpty) {
       // Añadir la clase a la colección 'classes'
-      final classRef = FirebaseFirestore.instance.collection('classes').doc();
+      final classRef = FirebaseFirestore.instance.collection('class').doc();
       classRef.set({
         'nombre': className,
         'descripcion': classDescription,
@@ -243,7 +244,7 @@ class _ClassScreenState extends State<ClassScreen> {
           Expanded(
             child: StreamBuilder(
               stream:
-                  FirebaseFirestore.instance.collection('classes').snapshots(),
+                  FirebaseFirestore.instance.collection('class').snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -280,8 +281,8 @@ class _ClassScreenState extends State<ClassScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => GroupMainScreen(
-                              idGroup: classId,
+                            builder: (context) => ClassMainScreen(
+                              classId: classId,
                               myUserId: currentUserId ?? '',
                             ),
                           ),
