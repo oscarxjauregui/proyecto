@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:proyecto/models/custom_drawer.dart';
+import 'package:proyecto/screens/class_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/screens/login_screen.dart';
 import 'package:proyecto/screens/message_list_screen.dart';
@@ -111,7 +112,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inicio'),
+        title: Text('SocialLynx'),
         actions: [
           IconButton(
             icon: Icon(Icons.search),
@@ -155,7 +156,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               accountEmail: Text(userEmail ?? 'Cargando...'),
             ),
             ListTile(
-              leading: Icon(Icons.person),
+              leading: Icon(Icons.person_outlined),
               title: Text('Mi perfil'),
               subtitle: Text('Ver mi perfil'),
               onTap: () {
@@ -186,8 +187,8 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
             ),
             ListTile(
               leading: Icon(Icons.date_range_outlined),
-              title: Text('Citas'),
-              subtitle: Text('Ver mis citas'),
+              title: Text('Calificaciones'),
+              subtitle: Text('Ver mis calificaciones'),
               onTap: () {
                 Navigator.push(
                   context,
@@ -200,9 +201,9 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.groups),
+              leading: Icon(Icons.groups_2_outlined),
               title: Text('Grupos'),
-              subtitle: Text('Ver todos los grupos'),
+              subtitle: Text('Ver mis grupos'),
               onTap: () {
                 Navigator.push(
                   context,
@@ -215,14 +216,14 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.groups_outlined),
-              title: Text('Mis grupos'),
-              subtitle: Text('Ver mis grupos'),
+              leading: Icon(Icons.class_outlined),
+              title: Text('Clases'),
+              subtitle: Text('Ver mis clases'),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => MyUserScreen(
+                    builder: (context) => ClassScreen(
                       userId: widget.myIdUser,
                     ),
                   ),
@@ -232,7 +233,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
             ListTile(
               leading: Icon(Icons.exit_to_app),
               title: Text('Salir'),
-              subtitle: Text('Cerrar sesión'),
+              subtitle: Text('Cerrar sesion'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(context);

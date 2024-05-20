@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:proyecto/models/custom_drawer.dart';
+import 'package:proyecto/screens/group_detail_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/screens/login_screen.dart';
 import 'package:proyecto/screens/message_list_screen.dart';
@@ -138,8 +139,9 @@ class _GroupMainScreenState extends State<GroupMainScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SearchScreen(
-                    myIdUser: widget.myUserId,
+                  builder: (context) => GroupDetailScreen(
+                    idGroup: widget.idGroup,
+                    myUserId: widget.myUserId,
                   ),
                 ),
               );

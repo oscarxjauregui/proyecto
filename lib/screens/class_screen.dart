@@ -3,43 +3,57 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto/screens/group_main_screen.dart';
 
-class GroupsScreen extends StatefulWidget {
+class ClassScreen extends StatefulWidget {
   final String userId;
 
-  const GroupsScreen({Key? key, required this.userId}) : super(key: key);
+  const ClassScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
-  State<GroupsScreen> createState() => _GroupsScreenState();
+  State<ClassScreen> createState() => _ClassScreenState();
 }
 
-class _GroupsScreenState extends State<GroupsScreen> {
+class _ClassScreenState extends State<ClassScreen> {
   TextEditingController _searchController = TextEditingController();
-  TextEditingController _groupNameController = TextEditingController();
-  TextEditingController _groupDescriptionController = TextEditingController();
+  TextEditingController _classNameController = TextEditingController();
+  TextEditingController _classDescriptionController = TextEditingController();
 
   String? currentUserId;
-  List<String> _userGroupIds = [];
+  List<String> _userClassIds = [];
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
     currentUserId = widget.userId;
-    _fetchUserGroups();
+    _fetchUserRole();
+    _fetchUserClasses();
   }
 
-  Future<void> _fetchUserGroups() async {
+  Future<void> _fetchUserRole() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .get();
+    if (userDoc.exists) {
+      setState(() {
+        _userRole = userDoc.data()?['rol'] ?? '';
+      });
+    }
+  }
+
+  Future<void> _fetchUserClasses() async {
     final querySnapshot = await FirebaseFirestore.instance
-        .collection('group-user')
+        .collection('class-user')
         .where('userId', isEqualTo: currentUserId)
         .get();
-    final userGroupIds =
-        querySnapshot.docs.map((doc) => doc['groupId'] as String).toList();
+    final userClassIds =
+        querySnapshot.docs.map((doc) => doc['classId'] as String).toList();
     setState(() {
-      _userGroupIds = userGroupIds;
+      _userClassIds = userClassIds;
     });
   }
 
-  void _showCreateGroupBottomSheet(BuildContext context) {
+  void _showCreateClassBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -55,22 +69,22 @@ class _GroupsScreenState extends State<GroupsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextField(
-                  controller: _groupNameController,
+                  controller: _classNameController,
                   decoration: InputDecoration(
-                    labelText: 'Nombre del grupo',
+                    labelText: 'Nombre de la clase',
                   ),
                 ),
                 SizedBox(height: 20.0),
                 TextField(
-                  controller: _groupDescriptionController,
+                  controller: _classDescriptionController,
                   decoration: InputDecoration(
-                    labelText: 'Descripción del grupo',
+                    labelText: 'Descripción de la clase',
                   ),
                 ),
                 SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: () {
-                    _createGroup();
+                    _createClass();
                   },
                   child: Text('Guardar'),
                 ),
@@ -82,32 +96,32 @@ class _GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  void _createGroup() async {
-    final String groupName = _groupNameController.text.trim();
-    final String groupDescription = _groupDescriptionController.text.trim();
-    if (groupName.isNotEmpty) {
-      // Añadir el grupo a la colección 'groups'
-      final groupRef = FirebaseFirestore.instance.collection('groups').doc();
-      groupRef.set({
-        'nombre': groupName,
-        'descripcion': groupDescription,
+  void _createClass() async {
+    final String className = _classNameController.text.trim();
+    final String classDescription = _classDescriptionController.text.trim();
+    if (className.isNotEmpty) {
+      // Añadir la clase a la colección 'classes'
+      final classRef = FirebaseFirestore.instance.collection('classes').doc();
+      classRef.set({
+        'nombre': className,
+        'descripcion': classDescription,
         'callID': Random().nextInt(9999),
         'idAdmin': currentUserId, // Añadir el campo 'idAdmin'
       }).then((_) {
-        // Agregar el ID del grupo a la colección 'group-user'
-        FirebaseFirestore.instance.collection('group-user').add({
-          'groupId': groupRef.id,
+        // Agregar el ID de la clase a la colección 'class-user'
+        FirebaseFirestore.instance.collection('class-user').add({
+          'classId': classRef.id,
           'userId': currentUserId,
         }).then((_) {
-          // Éxito al agregar el ID del grupo en 'group-user'
-          print('ID del grupo agregado en group-user');
+          // Éxito al agregar el ID de la clase en 'class-user'
+          print('ID de la clase agregado en class-user');
         }).catchError((error) {
-          // Error al agregar el ID del grupo en 'group-user'
-          print('Error al agregar el ID del grupo: $error');
+          // Error al agregar el ID de la clase en 'class-user'
+          print('Error al agregar el ID de la clase: $error');
         });
       }).catchError((error) {
-        // Error al agregar el grupo en 'groups'
-        print('Error al agregar el grupo: $error');
+        // Error al agregar la clase en 'classes'
+        print('Error al agregar la clase: $error');
       });
     }
     await Future.delayed(Duration(seconds: 1));
@@ -115,14 +129,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => GroupsScreen(
+        builder: (context) => ClassScreen(
           userId: widget.userId,
         ),
       ),
     );
   }
 
-  void _showJoinGroupBottomSheet(BuildContext context, String groupId) {
+  void _showJoinClassBottomSheet(BuildContext context, String classId) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -133,23 +147,23 @@ class _GroupsScreenState extends State<GroupsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '¿Quieres unirte a este grupo?',
+                '¿Quieres unirte a esta clase?',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () async {
-                  bool isMember = await _isUserInGroup(groupId, currentUserId!);
+                  bool isMember = await _isUserInClass(classId, currentUserId!);
                   if (isMember) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            'No te puedes unir ya eres miembro de este grupo.'),
+                            'No te puedes unir, ya eres miembro de esta clase.'),
                       ),
                     );
                     Navigator.pop(context);
                   } else {
-                    _joinGroup(groupId);
+                    _joinClass(classId);
                     Navigator.pop(context);
                   }
                 },
@@ -168,29 +182,29 @@ class _GroupsScreenState extends State<GroupsScreen> {
     );
   }
 
-  Future<bool> _isUserInGroup(String groupId, String userId) async {
+  Future<bool> _isUserInClass(String classId, String userId) async {
     final querySnapshot = await FirebaseFirestore.instance
-        .collection('group-user')
-        .where('groupId', isEqualTo: groupId)
+        .collection('class-user')
+        .where('classId', isEqualTo: classId)
         .where('userId', isEqualTo: userId)
         .get();
     return querySnapshot.docs.isNotEmpty;
   }
 
-  void _joinGroup(String groupId) async {
-    FirebaseFirestore.instance.collection('group-user').add({
-      'groupId': groupId,
+  void _joinClass(String classId) async {
+    FirebaseFirestore.instance.collection('class-user').add({
+      'classId': classId,
       'userId': currentUserId,
     }).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Te has unido al grupo con éxito.'),
+          content: Text('Te has unido a la clase con éxito.'),
         ),
       );
     }).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al unirse al grupo: $error'),
+          content: Text('Error al unirse a la clase: $error'),
         ),
       );
     });
@@ -198,7 +212,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GroupsScreen(
+        builder: (context) => ClassScreen(
           userId: currentUserId ?? '',
         ),
       ),
@@ -209,7 +223,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Grupos'),
+        title: Text('Clases'),
       ),
       body: Column(
         children: [
@@ -218,7 +232,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Buscar por nombre de grupo...',
+                hintText: 'Buscar por nombre de clase...',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (value) {
@@ -229,7 +243,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           Expanded(
             child: StreamBuilder(
               stream:
-                  FirebaseFirestore.instance.collection('groups').snapshots(),
+                  FirebaseFirestore.instance.collection('classes').snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -237,27 +251,37 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
-                final groups = snapshot.data?.docs ?? [];
+                final classes = snapshot.data?.docs ?? [];
                 final searchText = _searchController.text.toLowerCase();
-                final filteredGroups = groups.where((group) {
-                  final groupData = group.data() as Map<String, dynamic>;
-                  final groupName = groupData['nombre']?.toLowerCase() ?? '';
-                  return _userGroupIds.contains(group.id) &&
-                      groupName.contains(searchText);
+                final filteredClasses = classes.where((classDoc) {
+                  final classData = classDoc.data() as Map<String, dynamic>;
+                  final className = classData['nombre']?.toLowerCase() ?? '';
+                  return _userClassIds.contains(classDoc.id) &&
+                      className.contains(searchText);
                 }).toList();
+
+                if (filteredClasses.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No hay clases disponibles',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  );
+                }
+
                 return ListView.builder(
-                  itemCount: filteredGroups.length,
+                  itemCount: filteredClasses.length,
                   itemBuilder: (context, index) {
-                    final groupData =
-                        filteredGroups[index].data() as Map<String, dynamic>;
-                    final groupId = filteredGroups[index].id;
+                    final classData =
+                        filteredClasses[index].data() as Map<String, dynamic>;
+                    final classId = filteredClasses[index].id;
                     return InkWell(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => GroupMainScreen(
-                              idGroup: groupId,
+                              idGroup: classId,
                               myUserId: currentUserId ?? '',
                             ),
                           ),
@@ -266,10 +290,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                       child: Card(
                         margin: EdgeInsets.all(8.0),
                         child: ListTile(
-                          title: Text(groupData['nombre'] ?? ''),
-                          subtitle: Text(groupData['descripcion'] ?? ''),
+                          title: Text(classData['nombre'] ?? ''),
+                          subtitle: Text(classData['descripcion'] ?? ''),
                           trailing: FutureBuilder<int>(
-                            future: _getGroupUserCount(groupId),
+                            future: _getClassUserCount(classId),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -282,13 +306,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text('${snapshot.data ?? 0} usuarios'),
-                                  IconButton(
-                                    icon: Icon(Icons.add),
-                                    onPressed: () {
-                                      _showJoinGroupBottomSheet(
-                                          context, groupId);
-                                    },
-                                  ),
                                 ],
                               );
                             },
@@ -303,24 +320,26 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showCreateGroupBottomSheet(context);
-        },
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: _userRole == 'Maestro'
+          ? FloatingActionButton(
+              onPressed: () {
+                _showCreateClassBottomSheet(context);
+              },
+              child: Icon(Icons.add),
+            )
+          : null,
     );
   }
 
-  Future<int> _getGroupUserCount(String groupId) async {
+  Future<int> _getClassUserCount(String classId) async {
     try {
       final querySnapshot = await FirebaseFirestore.instance
-          .collection('group-user')
-          .where('groupId', isEqualTo: groupId)
+          .collection('class-user')
+          .where('classId', isEqualTo: classId)
           .get();
       return querySnapshot.size;
     } catch (e) {
-      print('Error al obtener el número de usuarios del grupo: $e');
+      print('Error al obtener el número de usuarios de la clase: $e');
       return 0;
     }
   }

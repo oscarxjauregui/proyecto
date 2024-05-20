@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 as Map<String, dynamic>?; // Corrección aquí
                             final userRole = userData?['rol'];
                             if (userRole != null) {
-                              if (userRole == 'Cliente') {
+                              if (userRole == 'Estudiante') {
                                 final userId = userSnapshot.docs.first.id;
                                 Navigator.push(
                                   context,
@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 );
-                              } else if (userRole == 'Manicurista') {
+                              } else if (userRole == 'Maestro') {
                                 final userId = userSnapshot.docs.first.id;
                                 Navigator.push(
                                   context,
