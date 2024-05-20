@@ -17,19 +17,23 @@ import 'package:proyecto/services/avatar_firebase.dart';
 import 'package:proyecto/services/publication_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
 
-class HomeClienteScreen extends StatefulWidget {
-  final String myIdUser;
+class GroupMainScreen extends StatefulWidget {
+  final String idGroup;
+  final String myUserId;
 
-  const HomeClienteScreen({required this.myIdUser, Key? key}) : super(key: key);
+  const GroupMainScreen(
+      {required this.myUserId, required this.idGroup, Key? key})
+      : super(key: key);
 
   @override
-  State<HomeClienteScreen> createState() => _HomeClienteScreenState();
+  State<GroupMainScreen> createState() => _GroupMainScreenState();
 }
 
-class _HomeClienteScreenState extends State<HomeClienteScreen> {
+class _GroupMainScreenState extends State<GroupMainScreen> {
   String? userName;
   String? userEmail;
   String? avatarUrl;
+  String? groupName;
   File? _image;
   final picker = ImagePicker();
   final _descriptionController = TextEditingController();
@@ -38,10 +42,11 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   void initState() {
     super.initState();
     loadUserData();
+    loadGroupName();
   }
 
   Future<void> loadUserData() async {
-    final userSnapshot = await UsersFirebase().consultarPorId(widget.myIdUser);
+    final userSnapshot = await UsersFirebase().consultarPorId(widget.myUserId);
     if (userSnapshot.exists) {
       final userData = userSnapshot.data() as Map<String, dynamic>;
       setState(() {
@@ -49,13 +54,26 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
         userEmail = userData['email'];
       });
       final avatarSnapshot =
-          await AvatarFirebase().consultarAvatar(widget.myIdUser);
+          await AvatarFirebase().consultarAvatar(widget.myUserId);
       if (avatarSnapshot.exists) {
         final avatarData = avatarSnapshot.data() as Map<String, dynamic>;
         setState(() {
           avatarUrl = avatarData['imageUrl'];
         });
       }
+    }
+  }
+
+  Future<void> loadGroupName() async {
+    final groupSnapshot = await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.idGroup)
+        .get();
+    if (groupSnapshot.exists) {
+      final groupData = groupSnapshot.data() as Map<String, dynamic>;
+      setState(() {
+        groupName = groupData['nombre'];
+      });
     }
   }
 
@@ -84,7 +102,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     }
     final storage = FirebaseStorage.instance;
     final Reference storageReference =
-        storage.ref().child('publicaciones/${DateTime.now()}.png');
+        storage.ref().child('grupo-publicaciones/${DateTime.now()}.png');
     String? imageUrl;
     if (_image != null) {
       final UploadTask uploadTask = storageReference.putFile(_image!);
@@ -94,13 +112,14 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     }
     final now = DateTime.now();
     final publicationData = {
-      'idUser': widget.myIdUser,
+      'idUser': widget.myUserId,
+      'idGroup': widget.idGroup,
       'descripcion': description ?? '',
       'fecha': now.toIso8601String(),
       'imageUrl': imageUrl,
     };
 
-    await PublicationFirebase().guardar(publicationData);
+    await PublicationFirebase().guardarEnGrupo(publicationData);
     _refreshPage();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Publicación realizada con éxito')),
@@ -111,141 +130,22 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inicio'),
+        title: Text(groupName ?? 'Grupo'),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.info_outline),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => SearchScreen(
-                    myIdUser: widget.myIdUser,
+                    myIdUser: widget.myUserId,
                   ),
                 ),
               );
             },
           ),
         ],
-      ),
-      // drawer: CustomDrawer(
-      //   myIdUser: widget.myIdUser,
-      //   userName: userName,
-      //   userEmail: userEmail,
-      //   avatarUrl: avatarUrl,
-      //   onMenuItemTap: (index) {
-      //     Navigator.pop(context);
-      //   },
-      // ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            UserAccountsDrawerHeader(
-              currentAccountPicture: avatarUrl != null
-                  ? CircleAvatar(
-                      backgroundImage: NetworkImage(avatarUrl!),
-                    )
-                  : CircleAvatar(
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                      ),
-                    ),
-              accountName: Text(userName ?? 'Cargando...'),
-              accountEmail: Text(userEmail ?? 'Cargando...'),
-            ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Mi perfil'),
-              subtitle: Text('Ver mi perfil'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyUserScreen(
-                      userId: widget.myIdUser,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.message_outlined),
-              title: Text('Mensajes'),
-              subtitle: Text('ver los mensajes'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MessageListScreen(
-                      myUserId: widget.myIdUser,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.date_range_outlined),
-              title: Text('Citas'),
-              subtitle: Text('Ver mis citas'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyUserScreen(
-                      userId: widget.myIdUser,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.groups),
-              title: Text('Grupos'),
-              subtitle: Text('Ver todos los grupos'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GroupsScreen(
-                      userId: widget.myIdUser,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.groups_outlined),
-              title: Text('Mis grupos'),
-              subtitle: Text('Ver mis grupos'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyUserScreen(
-                      userId: widget.myIdUser,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.exit_to_app),
-              title: Text('Salir'),
-              subtitle: Text('Cerrar sesión'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-                // Navigator.pushReplacement(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => LoginScreen(),
-                //   ),
-                // );
-              },
-            )
-          ],
-        ),
       ),
       body: Column(
         children: [
@@ -338,8 +238,9 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => HomeClienteScreen(
-          myIdUser: widget.myIdUser,
+        builder: (context) => GroupMainScreen(
+          myUserId: widget.myUserId,
+          idGroup: widget.idGroup,
         ),
       ),
     );
@@ -347,7 +248,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
 
   Widget _buildPostsList() {
     return FutureBuilder(
-      future: PublicationFirebase().obtenerPublicaciones(),
+      future: PublicationFirebase().obtenerPublicacionesDeGrupo(widget.idGroup),
       builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
