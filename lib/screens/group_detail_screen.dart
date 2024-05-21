@@ -105,26 +105,27 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           SnackBar(content: Text('Grupo eliminado con éxito.')),
         );
         // Navigator.pop(context);
-        _navigation();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al eliminar el grupo: $error')),
         );
       }
+      Navigator.pop(context);
+      Navigator.pop(context);
     }
   }
 
-  void _navigation() async {
-    await Future.delayed(Duration(seconds: 1));
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => GroupsScreen(
-          userId: widget.myUserId,
-        ),
-      ),
-    );
-  }
+  // void _navigation() async {
+  // //   await Future.delayed(Duration(seconds: 1));
+  // //   Navigator.pushReplacement(
+  // //     context,
+  // //     MaterialPageRoute(
+  // //       builder: (context) => GroupsScreen(
+  // //         userId: widget.myUserId,
+  // //       ),
+  // //     ),
+  // //   );
+  // // }
 
   void _addPerson() {
     showModalBottomSheet(
@@ -236,8 +237,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               title: Text(userData['nombre']),
               subtitle: Text(userData['email']),
               onTap: () {
-                _addUserToGroup(filteredUsers[index]);
-                Navigator.pop(context);
+                _confirmAddUser(filteredUsers[index]);
               },
             );
           },
@@ -246,8 +246,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  void _addUserToGroup(DocumentSnapshot userSnapshot) async {
-    final confirm = await showDialog<bool>(
+  void _confirmAddUser(DocumentSnapshot user) {
+    showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -270,23 +270,28 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           ],
         );
       },
-    );
-
-    if (confirm == true) {
-      try {
-        await FirebaseFirestore.instance.collection('group-user').add({
-          'groupId': widget.idGroup,
-          'userId': userSnapshot.id,
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario agregado al grupo.')),
-        );
-        _fetchGroupUsers(); // Actualizar la lista de usuarios del grupo
-      } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al agregar usuario al grupo: $error')),
-        );
+    ).then((confirm) {
+      if (confirm == true) {
+        _addUserToGroup(user);
+        Navigator.pop(context);
       }
+    });
+  }
+
+  void _addUserToGroup(DocumentSnapshot user) async {
+    try {
+      await FirebaseFirestore.instance.collection('group-user').add({
+        'groupId': widget.idGroup,
+        'userId': user.id,
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Usuario agregado con éxito.')),
+      );
+      _fetchGroupUsers(); // Refresh group users
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al agregar usuario: $error')),
+      );
     }
   }
 
@@ -328,7 +333,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Has abandonado el grupo.')),
           );
-          _navigation();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('No estás en el grupo.')),
@@ -339,6 +343,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           SnackBar(content: Text('Error al abandonar el grupo: $error')),
         );
       }
+      Navigator.pop(context);
+      Navigator.pop(context);
+      Navigator.pop(context);
     }
   }
 

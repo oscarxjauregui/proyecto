@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto/screens/class_screen.dart';
-import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 
 class ClassDetailScreen extends StatefulWidget {
-  final String classId;
+  final String idClass;
   final String myUserId;
+
   const ClassDetailScreen({
-    required this.classId,
+    required this.idClass,
     required this.myUserId,
     Key? key,
   }) : super(key: key);
@@ -35,7 +35,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     try {
       final classData = await FirebaseFirestore.instance
           .collection('class')
-          .doc(widget.classId)
+          .doc(widget.idClass)
           .get();
 
       setState(() {
@@ -43,7 +43,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
         _isAdmin = classData['idAdmin'] == widget.myUserId;
       });
     } catch (error) {
-      print('Error al obtener los datos del grupo: $error');
+      print('Error al obtener los datos de la clase: $error');
     }
   }
 
@@ -51,11 +51,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     try {
       final classUserSnapshot = await FirebaseFirestore.instance
           .collection('class-user')
-          .where('classId', isEqualTo: widget.classId)
+          .where('classId', isEqualTo: widget.idClass)
           .get();
 
       final userIds =
-          classUserSnapshot.docs.map((doc) => doc['classId']).toList();
+          classUserSnapshot.docs.map((doc) => doc['userId']).toList();
       final userDocs = await Future.wait(
         userIds.map((userId) =>
             FirebaseFirestore.instance.collection('users').doc(userId).get()),
@@ -65,7 +65,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
         _classUsers = userDocs;
       });
     } catch (error) {
-      print('Error al obtener los usuarios del grupo: $error');
+      print('Error al obtener los usuarios de la clase: $error');
     }
   }
 
@@ -99,32 +99,43 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
       try {
         await FirebaseFirestore.instance
             .collection('class')
-            .doc(widget.classId)
+            .doc(widget.idClass)
             .delete();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('La clase eliminado con éxito.')),
+          SnackBar(content: Text('Clase eliminada con éxito.')),
         );
-        // Navigator.pop(context);
-        _navigation();
+        // _navigation();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar el la clase: $error')),
+          SnackBar(content: Text('Error al eliminar la clase: $error')),
         );
       }
+      Navigator.pop(context);
+      Navigator.pop(context);
+      // Navigator.pop(context);
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => ClassScreen(
+      //       userId: widget.idClass,
+      //     ),
+      //   ),
+      // );
     }
   }
 
-  void _navigation() async {
-    await Future.delayed(Duration(seconds: 1));
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ClassScreen(
-          userId: widget.myUserId,
-        ),
-      ),
-    );
-  }
+  // void _navigation() async {
+  //   await Future.delayed(Duration(seconds: 1));
+  //   Navigator.pushReplacement(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => ClassDetailScreen(
+  //         myUserId: widget.myUserId,
+  //         idClass: widget.idClass,
+  //       ),
+  //     ),
+  //   );
+  // }
 
   void _addPerson() {
     showModalBottomSheet(
@@ -139,7 +150,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Agregar persona al grupo',
+                    'Agregar persona a la clase',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -236,8 +247,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
               title: Text(userData['nombre']),
               subtitle: Text(userData['email']),
               onTap: () {
-                _addUserToClass(filteredUsers[index]);
-                Navigator.pop(context);
+                _confirmAddUser(filteredUsers[index]);
               },
             );
           },
@@ -246,14 +256,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
-  void _addUserToClass(DocumentSnapshot userSnapshot) async {
-    final confirm = await showDialog<bool>(
+  void _confirmAddUser(DocumentSnapshot user) {
+    showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Confirmar adición'),
           content: Text(
-              '¿Estás seguro de que deseas agregar a este usuario a esta clase?'),
+              '¿Estás seguro de que deseas agregar a este usuario a la clase?'),
           actions: <Widget>[
             TextButton(
               child: Text('Cancelar'),
@@ -270,24 +280,28 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           ],
         );
       },
-    );
-
-    if (confirm == true) {
-      try {
-        await FirebaseFirestore.instance.collection('class-user').add({
-          'classId': widget.classId,
-          'userId': userSnapshot.id,
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario agregado a la clase.')),
-        );
-        _fetchClassUsers(); // Actualizar la lista de usuarios del grupo
-      } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error al agregar usuario a la clase: $error')),
-        );
+    ).then((confirm) {
+      if (confirm == true) {
+        _addUserToClass(user);
+        Navigator.pop(context);
       }
+    });
+  }
+
+  void _addUserToClass(DocumentSnapshot user) async {
+    try {
+      await FirebaseFirestore.instance.collection('class-user').add({
+        'classId': widget.idClass,
+        'userId': user.id,
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Usuario agregado con éxito.')),
+      );
+      _fetchClassUsers(); // Refresh class users
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al agregar usuario: $error')),
+      );
     }
   }
 
@@ -320,7 +334,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
       try {
         final classUserSnapshot = await FirebaseFirestore.instance
             .collection('class-user')
-            .where('classId', isEqualTo: widget.classId)
+            .where('classId', isEqualTo: widget.idClass)
             .where('userId', isEqualTo: widget.myUserId)
             .get();
 
@@ -329,7 +343,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Has abandonado la clase.')),
           );
-          _navigation();
+          // _navigation();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('No estás en la clase.')),
@@ -340,6 +354,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           SnackBar(content: Text('Error al abandonar la clase: $error')),
         );
       }
+      Navigator.pop(context);
+      Navigator.pop(context);
+      Navigator.pop(context);
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => ClassScreen(
+      //       userId: widget.idClass,
+      //     ),
+      //   ),
+      // );
     }
   }
 
@@ -347,7 +372,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detalles de la clase'),
+        title: Text('Detalles de la Clase'),
         actions: [
           if (_isAdmin) ...[
             IconButton(
@@ -401,7 +426,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           ),
           SizedBox(height: 20),
           Text(
-            'Personas en la clase:',
+            'Usuarios en la clase:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
@@ -509,7 +534,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                       );
                     },
                   )
-                : Center(child: Text('No hay usuarios en este grupo')),
+                : Center(child: Text('No hay usuarios en esta clase')),
           ),
         ],
       ),

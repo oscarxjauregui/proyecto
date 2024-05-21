@@ -282,13 +282,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text('${snapshot.data ?? 0} usuarios'),
-                                  IconButton(
-                                    icon: Icon(Icons.add),
-                                    onPressed: () {
-                                      _showJoinGroupBottomSheet(
-                                          context, groupId);
-                                    },
-                                  ),
+                                  // IconButton(
+                                  //   icon: Icon(Icons.add),
+                                  //   onPressed: () {
+                                  //     _showJoinGroupBottomSheet(
+                                  //         context, groupId);
+                                  //   },
+                                  // ),
                                 ],
                               );
                             },

@@ -141,7 +141,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ClassDetailScreen(
-                    classId: widget.classId,
+                    idClass: widget.classId,
                     myUserId: widget.myUserId,
                   ),
                 ),
