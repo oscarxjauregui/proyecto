@@ -9,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:proyecto/models/custom_drawer.dart';
 import 'package:proyecto/screens/class_detail_screen.dart';
+import 'package:proyecto/screens/class_post_alumno_screen.dart';
+import 'package:proyecto/screens/class_post_maestro_screen.dart';
+import 'package:proyecto/screens/class_post_screen.dart';
 import 'package:proyecto/screens/group_detail_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/screens/login_screen.dart';
@@ -18,6 +21,8 @@ import 'package:proyecto/screens/search_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 import 'package:proyecto/services/publication_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
+
+import 'package:flutter/material.dart';
 
 class ClassMainScreen extends StatefulWidget {
   final String classId;
@@ -39,6 +44,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
   File? _image;
   final picker = ImagePicker();
   final _descriptionController = TextEditingController();
+  String? idAdmin;
 
   @override
   void initState() {
@@ -75,6 +81,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
       final classData = classSnapshot.data() as Map<String, dynamic>;
       setState(() {
         className = classData['nombre'];
+        idAdmin = classData['idAdmin'];
       });
     }
   }
@@ -96,8 +103,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Por favor, selecciona una imagen o ingresa una descripción antes de publicar.',
-          ),
+              'Por favor, selecciona una imagen o ingresa una descripción antes de publicar.'),
         ),
       );
       return;
@@ -156,7 +162,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildCreatePostSection(),
+                  if (idAdmin == widget.myUserId) _buildCreatePostSection(),
                   SizedBox(height: 20),
                   _buildPostsList(),
                 ],
@@ -260,7 +266,6 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
         } else {
           List<Map<String, dynamic>> publicaciones = snapshot.data ?? [];
           publicaciones.sort((a, b) {
-            // Ordena por fecha descendente
             DateTime dateA = DateTime.parse(a['fecha']);
             DateTime dateB = DateTime.parse(b['fecha']);
             return dateB.compareTo(dateA);
@@ -271,12 +276,44 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
             itemCount: publicaciones.length,
             itemBuilder: (context, index) {
               final publicacion = publicaciones[index];
-              return _buildPost(publicacion);
+              return GestureDetector(
+                onTap: () {
+                  _navigateToPostScreen(publicacion);
+                },
+                child: _buildPost(publicacion),
+              );
             },
           );
         }
       },
     );
+  }
+
+  Future<void> _navigateToPostScreen(Map<String, dynamic> publicacion) async {
+    final classSnapshot = await FirebaseFirestore.instance
+        .collection('class')
+        .doc(widget.classId)
+        .get();
+    if (classSnapshot.exists) {
+      final classData = classSnapshot.data() as Map<String, dynamic>;
+      final isAdmin = classData['idAdmin'] == widget.myUserId;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => isAdmin
+              ? ClassPostMaestroScreen(
+                  myUserId: widget.myUserId,
+                  classId: widget.classId,
+                  publicacion: publicacion,
+                )
+              : ClassPostAlumnoScreen(
+                  myUserId: widget.myUserId,
+                  classId: widget.classId,
+                  publicacion: publicacion,
+                ),
+        ),
+      );
+    }
   }
 
   Widget _buildPost(Map<String, dynamic> publicacion) {
@@ -291,21 +328,17 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
         } else if (snapshot.hasError) {
           return Text('Error al cargar el usuario o el avatar');
         } else {
-          // Verificar si snapshot.data es nulo
           if (snapshot.data == null || snapshot.data!.isEmpty) {
             return Text('Datos nulos');
           }
 
-          final userData =
-              snapshot.data![0] as DocumentSnapshot; // Corrección aquí
-          final avatarData =
-              snapshot.data![1] as DocumentSnapshot; // Corrección aquí
+          final userData = snapshot.data![0] as DocumentSnapshot;
+          final avatarData = snapshot.data![1] as DocumentSnapshot;
 
           final nombreUsuario = userData['nombre'] ?? 'Usuario desconocido';
           final rolUsuario = userData['rol'] ?? 'Rol desconocido';
           final avatarUrl = avatarData['imageUrl'];
 
-          // Formatea la fecha
           final fecha = DateTime.parse(publicacion['fecha']);
           final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(fecha);
 
