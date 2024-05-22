@@ -47,7 +47,7 @@ android {
         // Habilitar Multidex
         multiDexEnabled true
         applicationId "com.example.proyecto"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21 // Cambia esto a 21
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

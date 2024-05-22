@@ -11,7 +11,6 @@ import 'package:proyecto/models/custom_drawer.dart';
 import 'package:proyecto/screens/class_detail_screen.dart';
 import 'package:proyecto/screens/class_post_alumno_screen.dart';
 import 'package:proyecto/screens/class_post_maestro_screen.dart';
-import 'package:proyecto/screens/class_post_screen.dart';
 import 'package:proyecto/screens/group_detail_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/screens/login_screen.dart';

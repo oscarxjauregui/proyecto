@@ -333,6 +333,7 @@ class _ClassPostAlumnoScreenState extends State<ClassPostAlumnoScreen> {
       future: FirebaseFirestore.instance
           .collection('class-tarea')
           .where('classId', isEqualTo: widget.classId)
+          .where('userId', isEqualTo: widget.myUserId) // Filtrar por myUserId
           .get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
