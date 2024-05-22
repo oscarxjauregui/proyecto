@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:proyecto/models/custom_drawer.dart';
+import 'package:proyecto/screens/calificaciones_screen.dart';
 import 'package:proyecto/screens/class_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
 import 'package:proyecto/screens/login_screen.dart';
@@ -31,6 +32,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   String? userName;
   String? userEmail;
   String? avatarUrl;
+  String? userRole;
   File? _image;
   final picker = ImagePicker();
   final _descriptionController = TextEditingController();
@@ -48,6 +50,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
       setState(() {
         userName = userData['nombre'];
         userEmail = userData['email'];
+        userRole = userData['rol'];
       });
       final avatarSnapshot =
           await AvatarFirebase().consultarAvatar(widget.myIdUser);
@@ -129,15 +132,6 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           ),
         ],
       ),
-      // drawer: CustomDrawer(
-      //   myIdUser: widget.myIdUser,
-      //   userName: userName,
-      //   userEmail: userEmail,
-      //   avatarUrl: avatarUrl,
-      //   onMenuItemTap: (index) {
-      //     Navigator.pop(context);
-      //   },
-      // ),
       drawer: Drawer(
         child: ListView(
           children: [
@@ -185,21 +179,22 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.date_range_outlined),
-              title: Text('Calificaciones'),
-              subtitle: Text('Ver mis calificaciones'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyUserScreen(
-                      userId: widget.myIdUser,
+            if (userRole == 'Estudiante')
+              ListTile(
+                leading: Icon(Icons.date_range_outlined),
+                title: Text('Calificaciones'),
+                subtitle: Text('Ver mis calificaciones'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CalificacionesScreen(
+                        myUserId: widget.myIdUser,
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
             ListTile(
               leading: Icon(Icons.groups_2_outlined),
               title: Text('Grupos'),
@@ -237,12 +232,6 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
-                // Navigator.pushReplacement(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => LoginScreen(),
-                //   ),
-                // );
               },
             )
           ],

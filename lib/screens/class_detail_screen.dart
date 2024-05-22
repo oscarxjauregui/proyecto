@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:proyecto/screens/add_to_class.dart';
 import 'package:proyecto/screens/class_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 
@@ -247,7 +248,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
               title: Text(userData['nombre']),
               subtitle: Text(userData['email']),
               onTap: () {
-                _confirmAddUser(filteredUsers[index]);
+                if (_isAdmin) {
+                  _showGradeDialog(filteredUsers[index]);
+                }
               },
             );
           },
@@ -256,51 +259,147 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     );
   }
 
-  void _confirmAddUser(DocumentSnapshot user) {
-    showDialog<bool>(
+  void _showGradeDialog(DocumentSnapshot user) async {
+    final TextEditingController _parcial1Controller = TextEditingController();
+    final TextEditingController _parcial2Controller = TextEditingController();
+    final TextEditingController _parcial3Controller = TextEditingController();
+    final TextEditingController _parcial4Controller = TextEditingController();
+
+    // Verificar si el usuario ya tiene calificaciones en Firebase
+    final existingGradesSnapshot = await FirebaseFirestore.instance
+        .collection('clase-calificacion')
+        .where('userId', isEqualTo: user.id)
+        .where('classId', isEqualTo: widget.idClass)
+        .limit(1)
+        .get();
+
+    if (existingGradesSnapshot.docs.isNotEmpty) {
+      // Si el usuario ya tiene calificaciones, cargarlas en el cuadro de texto
+      final existingGrades = existingGradesSnapshot.docs.first.data();
+      _parcial1Controller.text = existingGrades['parcial1'].toString();
+      _parcial2Controller.text = existingGrades['parcial2'].toString();
+      _parcial3Controller.text = existingGrades['parcial3'].toString();
+      _parcial4Controller.text = existingGrades['parcial4'].toString();
+    }
+
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirmar adición'),
-          content: Text(
-              '¿Estás seguro de que deseas agregar a este usuario a la clase?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return Container(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Calificaciones para ${user['nombre']}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: _parcial1Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Parcial 1',
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _parcial2Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Parcial 2',
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _parcial3Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Parcial 3',
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _parcial4Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Parcial 4',
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          _saveGrades(user.id, {
+                            'userId': user.id, // Agregar userId al documento
+                            'classId':
+                                widget.idClass, // Agregar classId al documento
+                            'parcial1': _parcial1Controller.text.isNotEmpty
+                                ? int.parse(_parcial1Controller.text)
+                                : 0,
+                            'parcial2': _parcial2Controller.text.isNotEmpty
+                                ? int.parse(_parcial2Controller.text)
+                                : 0,
+                            'parcial3': _parcial3Controller.text.isNotEmpty
+                                ? int.parse(_parcial3Controller.text)
+                                : 0,
+                            'parcial4': _parcial4Controller.text.isNotEmpty
+                                ? int.parse(_parcial4Controller.text)
+                                : 0,
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text('Guardar'),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
-            TextButton(
-              child: Text('Agregar'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ],
+          ),
         );
       },
-    ).then((confirm) {
-      if (confirm == true) {
-        _addUserToClass(user);
-        Navigator.pop(context);
-      }
-    });
+    );
   }
 
-  void _addUserToClass(DocumentSnapshot user) async {
+  void _saveGrades(String userId, Map<String, dynamic> grades) async {
     try {
-      await FirebaseFirestore.instance.collection('class-user').add({
-        'classId': widget.idClass,
-        'userId': user.id,
-      });
+      // Verificar si el usuario ya tiene calificaciones registradas
+      final existingGradesSnapshot = await FirebaseFirestore.instance
+          .collection('clase-calificacion')
+          .where('userId', isEqualTo: userId)
+          .where('classId', isEqualTo: widget.idClass)
+          .limit(1)
+          .get();
+
+      if (existingGradesSnapshot.docs.isNotEmpty) {
+        // Si ya tiene calificaciones, actualizar el documento existente
+        await existingGradesSnapshot.docs.first.reference.update(grades);
+      } else {
+        // Si no tiene calificaciones, crear un nuevo documento
+        await FirebaseFirestore.instance
+            .collection('clase-calificacion')
+            .doc('${widget.idClass}_$userId') // Nuevo ID de documento
+            .set({...grades, 'userId': userId, 'classId': widget.idClass});
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Usuario agregado con éxito.')),
+        SnackBar(content: Text('Calificaciones guardadas con éxito.')),
       );
-      _fetchClassUsers(); // Refresh class users
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al agregar usuario: $error')),
+        SnackBar(content: Text('Error al guardar calificaciones: $error')),
       );
     }
   }
@@ -377,7 +476,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
           if (_isAdmin) ...[
             IconButton(
               icon: Icon(Icons.person_add),
-              onPressed: _addPerson,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddToClass(
+                      myUserId: widget.myUserId,
+                      classId: widget.idClass,
+                    ),
+                  ),
+                );
+              },
             ),
             IconButton(
               icon: Icon(Icons.delete),
@@ -463,8 +572,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                           as Map<String, dynamic>;
                       return GestureDetector(
                         onTap: () {
-                          // Manejar la acción cuando se selecciona un usuario
-                          // Por ejemplo, navegar a la pantalla de perfil del usuario
+                          if (_isAdmin) {
+                            _showGradeDialog(_filteredClassUsers()[index]);
+                          }
                         },
                         child: Card(
                           margin: EdgeInsets.symmetric(
