@@ -67,50 +67,94 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () async {
                         final email = _emailController.text.trim();
                         final password = _passwordController.text.trim();
-                        final success = await _authFirebase.signInUser(
-                          email: email,
-                          password: password,
-                        );
-                        if (success) {
-                          final userSnapshot =
-                              await _usersFirebase.consultarPorEmail(email);
-                          if (userSnapshot.docs.isNotEmpty) {
-                            final userData = userSnapshot.docs.first.data()
-                                as Map<String, dynamic>?; // Corrección aquí
-                            final userRole = userData?['rol'];
-                            if (userRole != null) {
-                              if (userRole == 'Estudiante') {
-                                final userId = userSnapshot.docs.first.id;
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => HomeClienteScreen(
-                                      myIdUser: userId,
+
+                        // Validar campos vacíos
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('Por favor, llena todos los campos'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        try {
+                          final success = await _authFirebase.signInUser(
+                            email: email,
+                            password: password,
+                          );
+                          if (success) {
+                            final userSnapshot =
+                                await _usersFirebase.consultarPorEmail(email);
+                            if (userSnapshot.docs.isNotEmpty) {
+                              final userData = userSnapshot.docs.first.data()
+                                  as Map<String, dynamic>?; // Corrección aquí
+                              final userRole = userData?['rol'];
+                              if (userRole != null) {
+                                if (userRole == 'Estudiante') {
+                                  final userId = userSnapshot.docs.first.id;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => HomeClienteScreen(
+                                        myIdUser: userId,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              } else if (userRole == 'Maestro') {
-                                final userId = userSnapshot.docs.first.id;
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => HomeClienteScreen(
-                                      myIdUser: userId,
+                                  );
+                                } else if (userRole == 'Maestro') {
+                                  final userId = userSnapshot.docs.first.id;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => HomeClienteScreen(
+                                        myIdUser: userId,
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } else {
+                                  print('Error: Rol de usuario no reconocido');
+                                }
                               } else {
-                                print('Error: Rol de usuario no reconocido');
+                                print('Error: Rol de usuario no encontrado');
                               }
                             } else {
-                              print('Error: Rol de usuario no encontrado');
+                              print(
+                                  'Error: No se encontró ningún usuario con el correo electrónico proporcionado');
                             }
                           } else {
-                            print(
-                                'Error: No se encontró ningún usuario con el correo electrónico proporcionado');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al iniciar sesión'),
+                              ),
+                            );
                           }
-                        } else {
-                          print('Error al iniciar sesión');
+                        } catch (e) {
+                          if (e is FirebaseAuthException) {
+                            if (e.code == 'user-not-found' ||
+                                e.code == 'wrong-password') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Correo electrónico o contraseña incorrectos'),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'El email o contraseña son incorrectos'),
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'El email o contraseña son incorrectos'),
+                              ),
+                            );
+                          }
                         }
                       },
                     ),
@@ -171,10 +215,33 @@ class _LoginScreenState extends State<LoginScreen> {
         final UserCredential userCredential =
             await FirebaseAuth.instance.signInWithCredential(credential);
 
-        // Handle success, e.g., navigate to a new page
-        print(userCredential.user?.displayName);
+        // Obtener el email del usuario autenticado con Google
+        final String email = userCredential.user?.email ?? '';
+
+        // Consultar si el email ya está registrado en la colección 'users'
+        final userSnapshot = await _usersFirebase.consultarPorEmail(email);
+        if (userSnapshot.docs.isNotEmpty) {
+          // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeScreen
+          final userId = userSnapshot.docs.first.id;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeClienteScreen(
+                myIdUser: userId,
+              ),
+            ),
+          );
+        } else {
+          // Si el email no está registrado, navegar a la pantalla de registro
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SignUpScreen(),
+            ),
+          );
+        }
       } else {
-        // Handle error, e.g., show snackbar
+        // Manejar error, e.g., mostrar snackbar
         print('Error al iniciar sesión con Google');
       }
     } catch (e) {
