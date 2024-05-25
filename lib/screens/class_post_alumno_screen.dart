@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
@@ -154,24 +155,63 @@ class _ClassPostAlumnoScreenState extends State<ClassPostAlumnoScreen> {
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.photo_library),
-                    title: Text('Desde la galería'),
+                    leading: const Icon(
+                      Icons.photo_library,
+                      color: Colors.blueAccent,
+                      size: 36,
+                    ),
+                    title: Center(
+                      child: Text(
+                        'Desde la galería',
+                        style: GoogleFonts.comicNeue(
+                          color: Colors.black,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                     onTap: () async {
                       await _selectImage(ImageSource.gallery);
                       setState(() {});
                     },
                   ),
                   ListTile(
-                    leading: Icon(Icons.camera_alt),
-                    title: Text('Desde la cámara'),
+                    leading: const Icon(
+                      Icons.camera_alt,
+                      color: Color.fromARGB(255, 77, 107, 97),
+                      size: 36,
+                    ),
+                    title: Center(
+                      child: Text(
+                        'Desde la cámara',
+                        style: GoogleFonts.comicNeue(
+                          color: Colors.black,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                     onTap: () async {
                       await _selectImage(ImageSource.camera);
                       setState(() {});
                     },
                   ),
                   ListTile(
-                    leading: Icon(Icons.picture_as_pdf),
-                    title: Text('Subir PDF'),
+                    leading: const Icon(
+                      Icons.picture_as_pdf,
+                      color: Colors.red,
+                      size: 36,
+                    ),
+                    title: Center(
+                      child: Text(
+                        'Subir PDF',
+                        style: GoogleFonts.comicNeue(
+                          color: Colors.black,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                     onTap: () async {
                       await _selectPdf();
                       setState(() {});

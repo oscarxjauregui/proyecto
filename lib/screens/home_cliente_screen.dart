@@ -1,17 +1,14 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:proyecto/models/custom_drawer.dart';
 import 'package:proyecto/screens/calificaciones_screen.dart';
 import 'package:proyecto/screens/class_screen.dart';
 import 'package:proyecto/screens/groups_screen.dart';
-import 'package:proyecto/screens/login_screen.dart';
 import 'package:proyecto/screens/message_list_screen.dart';
 import 'package:proyecto/screens/myuser_screen.dart';
 import 'package:proyecto/screens/search_screen.dart';
@@ -115,10 +112,21 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('SocialLynx'),
+        title: Text(
+          'SocialLynx',
+          style: GoogleFonts.lobster(
+            // Usando la fuente 'Lobster' para el título
+            color: Colors.black,
+            fontSize: 35,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(
+              Icons.search,
+              color: Color.fromARGB(255, 8, 50, 85),
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -150,9 +158,21 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               accountEmail: Text(userEmail ?? 'Cargando...'),
             ),
             ListTile(
-              leading: Icon(Icons.person_outlined),
-              title: Text('Mi perfil'),
-              subtitle: Text('Ver mi perfil'),
+              leading: const Icon(Icons.person_outlined,
+                  color: Color.fromARGB(255, 160, 148, 57)),
+              title: Text(
+                'Mi perfil',
+                style: GoogleFonts.comicNeue(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Ver mi perfil',
+                style: GoogleFonts.comicNeue(
+                    color: Color.fromARGB(255, 54, 53, 53)),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -165,9 +185,21 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.message_outlined),
-              title: Text('Mensajes'),
-              subtitle: Text('ver los mensajes'),
+              leading: const Icon(Icons.message_outlined, color: Colors.blue),
+              title: Text(
+                'Mensajes',
+                style: GoogleFonts.comicNeue(
+                  // Usando Google Fonts
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Ver los mensajes',
+                style: GoogleFonts.comicNeue(
+                    color: Color.fromARGB(255, 54, 53, 53)),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -181,9 +213,20 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
             ),
             if (userRole == 'Estudiante')
               ListTile(
-                leading: Icon(Icons.date_range_outlined),
-                title: Text('Calificaciones'),
-                subtitle: Text('Ver mis calificaciones'),
+                leading: const Icon(
+                  Icons.date_range_outlined,
+                  color: Colors.green,
+                ),
+                title: Text(
+                  'Calificaciones',
+                  style: GoogleFonts.comicNeue(
+                    // Usando Google Fonts
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text('Ver mis calificaciones'),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -196,9 +239,24 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                 },
               ),
             ListTile(
-              leading: Icon(Icons.groups_2_outlined),
-              title: Text('Grupos'),
-              subtitle: Text('Ver mis grupos'),
+              leading: const Icon(
+                Icons.groups_2_outlined,
+                color: Colors.purple,
+              ),
+              title: Text(
+                'Grupos',
+                style: GoogleFonts.comicNeue(
+                  // Usando Google Fonts
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Ver mis grupos',
+                style: GoogleFonts.comicNeue(
+                    color: const Color.fromARGB(255, 31, 31, 31)),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -211,9 +269,24 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.class_outlined),
-              title: Text('Clases'),
-              subtitle: Text('Ver mis clases'),
+              leading: const Icon(
+                Icons.class_outlined,
+                color: Color.fromARGB(255, 159, 112, 40),
+              ),
+              title: Text(
+                'Clases',
+                style: GoogleFonts.comicNeue(
+                  // Usando Google Fonts
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Ver mis clases',
+                style: GoogleFonts.comicNeue(
+                    color: Color.fromARGB(255, 54, 53, 53)),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -226,9 +299,24 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.exit_to_app),
-              title: Text('Salir'),
-              subtitle: Text('Cerrar sesion'),
+              leading: const Icon(
+                Icons.exit_to_app,
+                color: Colors.red,
+              ),
+              title: Text(
+                'Salir',
+                style: GoogleFonts.comicNeue(
+                  // Usando Google Fonts
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Cerrar sesion',
+                style: GoogleFonts.comicNeue(
+                    color: Color.fromARGB(255, 54, 53, 53)),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(context);

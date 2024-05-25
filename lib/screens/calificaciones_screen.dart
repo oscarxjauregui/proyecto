@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CalificacionesScreen extends StatefulWidget {
   final String myUserId;
+
   const CalificacionesScreen({required this.myUserId, Key? key})
       : super(key: key);
 
@@ -20,7 +21,6 @@ class _CalificacionesScreenState extends State<CalificacionesScreen> {
   }
 
   Future<void> obtenerCalificaciones() async {
-    // Obtener calificaciones del usuario
     final calificacionesQuery = await FirebaseFirestore.instance
         .collection('clase-calificacion')
         .where('userId', isEqualTo: widget.myUserId)
@@ -30,8 +30,6 @@ class _CalificacionesScreenState extends State<CalificacionesScreen> {
       final List<Map<String, dynamic>> tempList = [];
       for (final doc in calificacionesQuery.docs) {
         final calificacionesData = doc.data();
-
-        // Obtener nombre de la clase
         final classId = calificacionesData['classId'];
         final classDoc = await FirebaseFirestore.instance
             .collection('class')
@@ -56,13 +54,13 @@ class _CalificacionesScreenState extends State<CalificacionesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Calificaciones'),
+        title: const Text('Calificaciones'),
       ),
       body: calificaciones.isNotEmpty
           ? SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
-                columns: [
+                columns: const [
                   DataColumn(label: Text('Clase')),
                   DataColumn(label: Text('Parcial 1')),
                   DataColumn(label: Text('Parcial 2')),
@@ -84,7 +82,7 @@ class _CalificacionesScreenState extends State<CalificacionesScreen> {
                     .toList(),
               ),
             )
-          : Center(
+          : const Center(
               child: Text('No hay calificaciones'),
             ),
     );
