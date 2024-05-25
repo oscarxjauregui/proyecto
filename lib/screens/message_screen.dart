@@ -106,6 +106,8 @@ class _MessageScreenState extends State<MessageScreen> {
 
   Future<void> _uploadVideo(File videoFile) async {
     try {
+      _showLoadingDialog(); // Mostrar diálogo de carga
+
       // Nombre del archivo en el almacenamiento de Firebase
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -131,7 +133,10 @@ class _MessageScreenState extends State<MessageScreen> {
             url, // Guardar el enlace del video en la propiedad 'videoUrl'
         'timestamp': DateTime.now(),
       });
+
+      Navigator.pop(context); // Cerrar diálogo de carga
     } catch (e) {
+      Navigator.pop(context); // Cerrar diálogo de carga en caso de error
       print("Error al subir el video al almacenamiento de Firebase: $e");
     }
   }
@@ -577,6 +582,8 @@ class _MessageScreenState extends State<MessageScreen> {
 
   Future<void> _uploadPdf(File pdfFile) async {
     try {
+      _showLoadingDialog(); // Mostrar diálogo de carga
+
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
       Reference firebaseStorageRef =
           FirebaseStorage.instance.ref().child('pdfs/$fileName.pdf');
@@ -590,9 +597,34 @@ class _MessageScreenState extends State<MessageScreen> {
         'pdfUrl': url,
         'timestamp': DateTime.now(),
       });
+
+      Navigator.pop(context); // Cerrar diálogo de carga
     } catch (e) {
+      Navigator.pop(context); // Cerrar diálogo de carga en caso de error
       print("Error al subir el PDF al almacenamiento de Firebase: $e");
     }
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text("Cargando..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

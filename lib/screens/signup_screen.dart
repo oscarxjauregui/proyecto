@@ -249,15 +249,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       }
                     },
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all<Color>(
+                      backgroundColor: MaterialStateProperty.all<Color>(
                           const Color.fromARGB(195, 27, 98,
                               51)), // Cambia el color de fondo del botón
-                      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                           EdgeInsets.all(10)), // Ajusta el padding del botón
-                      textStyle: WidgetStateProperty.all<TextStyle>(const TextStyle(
-                          fontSize:
-                              30)), // Cambia el estilo del texto dentro del botón
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                      textStyle: MaterialStateProperty.all<TextStyle>(
+                          const TextStyle(
+                              fontSize:
+                                  30)), // Cambia el estilo del texto dentro del botón
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                   10))), // Agrega bordes redondeados al botón
