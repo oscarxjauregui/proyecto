@@ -124,9 +124,10 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     final storage = FirebaseStorage.instance;
     String? fileType;
     if (_image != null) {
-      if (_image!.path.endsWith('.mp4')) {
+      final extension = _image!.path.split('.').last.toLowerCase();
+      if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'].contains(extension)) {
         fileType = 'videos';
-      } else if (_image!.path.endsWith('.pdf')) {
+      } else if (extension == 'pdf') {
         fileType = 'pdfs';
       } else {
         fileType = 'images';
@@ -135,6 +136,9 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
 
     final Reference storageReference = storage.ref().child(
         '$fileType/${DateTime.now()}.${fileType == 'videos' ? 'mp4' : fileType == 'pdfs' ? 'pdf' : 'png'}');
+
+    // final Reference storageReference = storage.ref().child(
+    //     '$fileType/${DateTime.now()}.${fileType == 'videos' ? 'mp4' : fileType == 'pdfs' ? 'pdf' : 'png'}');
     String? fileUrl;
     if (_image != null) {
       final UploadTask uploadTask = storageReference.putFile(_image!);
@@ -609,11 +613,9 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     if (fileType == 'images')
                       Image.network(fileUrl)
                     else if (fileType == 'videos')
-                      Text(fileUrl)
-                    // VideoPlayerWidget(
-                    //   videoUrl: fileUrl
-                    // )
-                    // VideoPlayerWidget(fileUrl: fileUrl)
+                      VideoPlayerWidget(
+                          fileUrl:
+                              fileUrl) // Reemplaza Text(fileUrl) por VideoPlayerWidget
                     else if (fileType == 'pdfs')
                       InkWell(
                         onTap: () {
@@ -665,11 +667,12 @@ class VideoPlayerWidget extends StatefulWidget {
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _controller;
+  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.fileUrl))
+    _controller = VideoPlayerController.network(widget.fileUrl)
       ..initialize().then((_) {
         setState(() {});
       });
@@ -684,26 +687,30 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     return _controller.value.isInitialized
-        ? AspectRatio(
-            aspectRatio: _controller.value.aspectRatio,
-            child: VideoPlayer(_controller),
+        ? Column(
+            children: [
+              AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPlaying ? _controller.pause() : _controller.play();
+                        _isPlaying = !_isPlaying;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
           )
         : Center(child: CircularProgressIndicator());
-  }
-}
-
-class PDFViewerWidget extends StatelessWidget {
-  final String fileUrl;
-
-  const PDFViewerWidget({required this.fileUrl, Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 300,
-      child: PDFView(
-        filePath: fileUrl,
-      ),
-    );
   }
 }
