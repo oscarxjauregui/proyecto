@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:advance_pdf_viewer_fork/advance_pdf_viewer_fork.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -15,6 +18,7 @@ import 'package:proyecto/screens/search_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 import 'package:proyecto/services/publication_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
+import 'package:video_player/video_player.dart';
 
 class HomeClienteScreen extends StatefulWidget {
   final String myIdUser;
@@ -60,14 +64,29 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
     }
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await picker.pickImage(source: source);
+  Future<void> _pickFile(String type) async {
+    XFile? pickedFile;
+    if (type == 'image') {
+      pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    } else if (type == 'camera') {
+      pickedFile = await picker.pickImage(source: ImageSource.camera);
+    } else if (type == 'video') {
+      pickedFile = await picker.pickVideo(source: ImageSource.gallery);
+    } else if (type == 'pdf') {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result != null) {
+        pickedFile = XFile(result.files.single.path!);
+      }
+    }
 
     setState(() {
       if (pickedFile != null) {
-        _image = File(pickedFile.path);
+        _image = File(pickedFile.path); // Almacena el archivo seleccionado.
       } else {
-        print('No se seleccionó ninguna imagen.');
+        print('No se seleccionó ningún archivo.');
       }
     });
   }
@@ -77,31 +96,67 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Por favor, selecciona una imagen o ingresa una descripción antes de publicar.',
+            'Por favor, selecciona una imagen, video, PDF o ingresa una descripción antes de publicar.',
           ),
         ),
       );
       return;
     }
+
+    // Muestra el diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 10),
+              Text('Publicando...')
+            ],
+          ),
+        );
+      },
+    );
+
     final storage = FirebaseStorage.instance;
-    final Reference storageReference =
-        storage.ref().child('publicaciones/${DateTime.now()}.png');
-    String? imageUrl;
+    String? fileType;
+    if (_image != null) {
+      if (_image!.path.endsWith('.mp4')) {
+        fileType = 'videos';
+      } else if (_image!.path.endsWith('.pdf')) {
+        fileType = 'pdfs';
+      } else {
+        fileType = 'images';
+      }
+    }
+
+    final Reference storageReference = storage.ref().child(
+        '$fileType/${DateTime.now()}.${fileType == 'videos' ? 'mp4' : fileType == 'pdfs' ? 'pdf' : 'png'}');
+    String? fileUrl;
     if (_image != null) {
       final UploadTask uploadTask = storageReference.putFile(_image!);
       await uploadTask.whenComplete(() async {
-        imageUrl = await storageReference.getDownloadURL();
+        fileUrl = await storageReference.getDownloadURL();
       });
     }
+
     final now = DateTime.now();
     final publicationData = {
       'idUser': widget.myIdUser,
       'descripcion': description ?? '',
       'fecha': now.toIso8601String(),
-      'imageUrl': imageUrl,
+      'fileUrl': fileUrl,
+      'fileType': fileType,
     };
 
     await PublicationFirebase().guardar(publicationData);
+
+    // Oculta el diálogo de carga
+    Navigator.pop(context);
+
     _refreshPage();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Publicación realizada con éxito')),
@@ -384,22 +439,36 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
               children: [
                 IconButton(
                   onPressed: () {
-                    _pickImage(ImageSource.gallery);
+                    _pickFile('image');
                   },
                   icon: Icon(Icons.photo_library),
                 ),
                 IconButton(
-                  onPressed: () {
-                    _pickImage(ImageSource.camera);
-                  },
-                  icon: Icon(Icons.camera_alt),
-                ),
+                    onPressed: () {
+                      _pickFile('camera');
+                    },
+                    icon: Icon(Icons.camera_alt)),
+                IconButton(
+                    onPressed: () {
+                      _pickFile('video');
+                    },
+                    icon: Icon(Icons.video_library)),
+                IconButton(
+                    onPressed: () {
+                      _pickFile('pdf');
+                    },
+                    icon: Icon(Icons.picture_as_pdf)),
+                // IconButton(
+                //   onPressed: () {
+                //     _showBottomSheet(context);
+                //   },
+                //   icon: Icon(Icons.add),
+                // ),
                 ElevatedButton(
                   onPressed: () {
                     _uploadAndSavePublication(
                       description: _descriptionController.text.trim(),
                     );
-                    //_refreshPage();
                   },
                   child: Text('Publicar'),
                 ),
@@ -482,6 +551,8 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           // Formatea la fecha
           final fecha = DateTime.parse(publicacion['fecha']);
           final formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(fecha);
+          final fileType = publicacion['fileType'];
+          final fileUrl = publicacion['fileUrl'];
 
           return Card(
             margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -534,15 +605,105 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                   SizedBox(height: 10),
                   Text(publicacion['descripcion']),
                   SizedBox(height: 10),
-                  publicacion['imageUrl'] != null
-                      ? Image.network(publicacion['imageUrl'])
-                      : SizedBox.shrink(),
+                  if (fileUrl != null) ...[
+                    if (fileType == 'images')
+                      Image.network(fileUrl)
+                    else if (fileType == 'videos')
+                      Text(fileUrl)
+                    // VideoPlayerWidget(
+                    //   videoUrl: fileUrl
+                    // )
+                    // VideoPlayerWidget(fileUrl: fileUrl)
+                    else if (fileType == 'pdfs')
+                      InkWell(
+                        onTap: () {
+                          _showPdf(context, fileUrl);
+                        },
+                        child: const Text(
+                          'Ver archivo',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue, // Color del enlace
+                            fontSize: 16,
+                          ),
+                        ),
+                      )
+                  ]
                 ],
               ),
             ),
           );
         }
       },
+    );
+  }
+
+  Future<void> _showPdf(BuildContext context, String pdfUrl) async {
+    // Agrega el parámetro de contexto aquí
+    try {
+      PDFDocument document = await PDFDocument.fromURL(pdfUrl);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PDFViewer(document: document),
+        ),
+      );
+    } catch (e) {
+      print("Error al mostrar el PDF: $e");
+    }
+  }
+}
+
+class VideoPlayerWidget extends StatefulWidget {
+  final String fileUrl;
+
+  const VideoPlayerWidget({required this.fileUrl, Key? key}) : super(key: key);
+
+  @override
+  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.fileUrl))
+      ..initialize().then((_) {
+        setState(() {});
+      });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _controller.value.isInitialized
+        ? AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          )
+        : Center(child: CircularProgressIndicator());
+  }
+}
+
+class PDFViewerWidget extends StatelessWidget {
+  final String fileUrl;
+
+  const PDFViewerWidget({required this.fileUrl, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 300,
+      child: PDFView(
+        filePath: fileUrl,
+      ),
     );
   }
 }
