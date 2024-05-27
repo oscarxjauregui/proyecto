@@ -60,6 +60,7 @@ dependencies:
   google_fonts:
   get:
   shared_preferences:
+  firebase_messaging:
 
 dev_dependencies:
   flutter_test:

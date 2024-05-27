@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto/screens/select_avatar_screen.dart';
+import 'package:proyecto/settings/app_value_notifier.dart';
 
 class MyUserScreen extends StatefulWidget {
   final String userId;
@@ -16,6 +17,7 @@ class _MyUserScreenState extends State<MyUserScreen> {
   late String _userEmail = '';
   late String _userRole = '';
   late String _userAvatarUrl = '';
+  late Color _userColor = Colors.blue; // Default color
 
   @override
   void initState() {
@@ -35,6 +37,9 @@ class _MyUserScreenState extends State<MyUserScreen> {
           _userName = userData['nombre'] ?? 'Nombre no disponible';
           _userEmail = userData['email'] ?? 'Correo no disponible';
           _userRole = userData['rol'] ?? 'Rol no disponible';
+          _userColor =
+              AppValueNotifier.getColorFromString(userData['color'] ?? 'blue');
+          AppValueNotifier.setTheme(_userColor);
         });
       }
 
@@ -50,6 +55,21 @@ class _MyUserScreenState extends State<MyUserScreen> {
       }
     } catch (e) {
       print('Error obteniendo datos del usuario: $e');
+    }
+  }
+
+  Future<void> _saveUserColor(String colorString) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .update({'color': colorString});
+      setState(() {
+        _userColor = AppValueNotifier.getColorFromString(colorString);
+        AppValueNotifier.setTheme(_userColor);
+      });
+    } catch (e) {
+      print('Error guardando el color del usuario: $e');
     }
   }
 
@@ -120,7 +140,41 @@ class _MyUserScreenState extends State<MyUserScreen> {
                   fontSize: 20,
                 ),
               ),
+              SizedBox(height: 20),
+              Text(
+                'Seleccionar color de tema:',
+                style: TextStyle(fontSize: 18),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _colorOption(Colors.blue, 'blue'),
+                  _colorOption(Colors.green, 'green'),
+                  _colorOption(Colors.red, 'red'),
+                ],
+              ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _colorOption(Color color, String colorString) {
+    return GestureDetector(
+      onTap: () {
+        _saveUserColor(colorString);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10),
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: _userColor == color ? Colors.black : Colors.transparent,
+            width: 3,
           ),
         ),
       ),

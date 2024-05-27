@@ -1,7 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:proyecto/screens/login_screen.dart';
-
+import 'package:proyecto/services/firebaseapi.dart';
 import 'package:proyecto/settings/app_value_notifier.dart';
 
 void main() async {
@@ -14,6 +15,18 @@ void main() async {
       projectId: "proyecto-pmsn-2024",
     ),
   );
+  await FirebaseApi().initNotifications();
+
+  // Load theme color from Firestore
+  String userId = 'yourUserIdHere';
+  final userSnapshot =
+      await FirebaseFirestore.instance.collection('users').doc(userId).get();
+  if (userSnapshot.exists) {
+    final userData = userSnapshot.data() as Map<String, dynamic>;
+    Color themeColor =
+        AppValueNotifier.getColorFromString(userData['color'] ?? 'blue');
+    AppValueNotifier.setTheme(themeColor);
+  }
 
   runApp(const MyApp());
 }
@@ -21,20 +34,17 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: AppValueNotifier.banTheme,
-      builder: ((context, value, child) {
-        return const MaterialApp(
+      valueListenable: AppValueNotifier.themeNotifier,
+      builder: (context, ThemeData themeData, child) {
+        return MaterialApp(
           debugShowCheckedModeBanner: false,
-          // theme: value
-          //     ? ThemeApp.darkTheme(context)
-          //     : ThemeApp.lightTheme(context),
-          home: LoginScreen(),
+          theme: themeData,
+          home: const LoginScreen(),
         );
-      }),
+      },
     );
   }
 }

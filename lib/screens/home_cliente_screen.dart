@@ -175,7 +175,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           'SocialLynx',
           style: GoogleFonts.lobster(
             // Usando la fuente 'Lobster' para el título
-            color: Colors.black,
+            color: Theme.of(context).primaryColor,
             fontSize: 35,
             fontWeight: FontWeight.bold,
           ),
@@ -672,7 +672,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(widget.fileUrl)
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.fileUrl))
       ..initialize().then((_) {
         setState(() {});
       });
