@@ -61,6 +61,9 @@ dependencies:
   get:
   shared_preferences:
   firebase_messaging:
+  firebase_installations: ^16.3.6
+  firebase_app_installations: ^0.2.5+5
+
 
 dev_dependencies:
   flutter_test:

@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:proyecto/screens/Home_cliente_screen.dart';
 import 'package:proyecto/screens/home_man_screen.dart';
 import 'package:proyecto/screens/recuperacionPass.dart';
+import 'package:proyecto/screens/reesend_code.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
 import 'package:proyecto/services/email_auth_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
@@ -152,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => HomeManScreen(
+                                builder: (context) => HomeClienteScreen(
                                   myIdUser: userId,
                                 ),
                               ),
@@ -262,6 +263,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ReenviarCodigoScreen(),
+                    ),
+                  );
+                },
+                child: const Text('Reenviar código de autenticación'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
                     decoration: TextDecoration.underline,
                   ),
                 ),

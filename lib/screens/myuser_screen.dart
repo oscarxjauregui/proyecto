@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:proyecto/screens/home_cliente_screen.dart';
 import 'package:proyecto/screens/select_avatar_screen.dart';
 import 'package:proyecto/settings/app_value_notifier.dart';
 
@@ -68,6 +69,12 @@ class _MyUserScreenState extends State<MyUserScreen> {
         _userColor = AppValueNotifier.getColorFromString(colorString);
         AppValueNotifier.setTheme(_userColor);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Color actualizado'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       print('Error guardando el color del usuario: $e');
     }
@@ -78,10 +85,18 @@ class _MyUserScreenState extends State<MyUserScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Mi perfil'),
+        backgroundColor: _userColor,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => HomeClienteScreen(
+                        myIdUser: widget.userId,
+                      )),
+            );
           },
         ),
       ),
@@ -143,8 +158,9 @@ class _MyUserScreenState extends State<MyUserScreen> {
               SizedBox(height: 20),
               Text(
                 'Seleccionar color de tema:',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 20),
               ),
+              SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

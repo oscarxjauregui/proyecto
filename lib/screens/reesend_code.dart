@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({Key? key}) : super(key: key);
+class ReenviarCodigoScreen extends StatefulWidget {
+  const ReenviarCodigoScreen({Key? key}) : super(key: key);
 
   @override
-  _ForgotPasswordPageState createState() => _ForgotPasswordPageState();
+  _ReenviarCodigoScreenState createState() => _ReenviarCodigoScreenState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+class _ReenviarCodigoScreenState extends State<ReenviarCodigoScreen> {
   final TextEditingController _emailController = TextEditingController();
 
   @override
@@ -17,7 +17,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Recuperar Contraseña',
+          'Reenviar Código',
           style: GoogleFonts.lobster(
             fontSize: 24.0,
             color: Colors.white, // Cambia el color aquí si es necesario
@@ -46,7 +46,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             // Cambia los colores y la fuente del botón
             ElevatedButton(
               onPressed: () {
-                _resetPassword(_emailController.text.trim());
+                _reenviarCodigoVerificacion(_emailController.text.trim());
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -54,7 +54,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     .green, // Cambia el color del texto del botón aquí si es necesario
               ),
               child: Text(
-                'Enviar Codigo de Recuperación',
+                'Reenviar Código de Autenticación',
                 style: GoogleFonts.comicNeue(
                   fontSize: 18.0,
                 ),
@@ -66,35 +66,57 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  Future<void> _resetPassword(String email) async {
+  Future<void> _reenviarCodigoVerificacion(String email) async {
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Correo de Recuperación Enviado'),
-            content: Text('Se ha enviado un correo electrónico a $email. '
-                'Siga las instrucciones en el correo para restablecer su contraseña.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Correo de Verificación Enviado'),
+              content: Text('Se ha enviado un correo de verificación a $email. '
+                  'Por favor, revise su bandeja de entrada y siga las instrucciones.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Usuario No Encontrado'),
+              content: Text(
+                  'No se encontró un usuario con ese correo electrónico, o el correo ya está verificado.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } catch (e) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Error al Enviar Correo de Recuperación'),
+            title: Text('Error al Enviar Correo de Verificación'),
             content: Text(
-                'Se produjo un error al intentar enviar el correo de recuperación. '
+                'Se produjo un error al intentar enviar el correo de verificación. '
                 'Por favor, inténtelo de nuevo más tarde.'),
             actions: [
               TextButton(
@@ -107,7 +129,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           );
         },
       );
-      print('Error al enviar correo de recuperación: $e');
+      print('Error al enviar correo de verificación: $e');
     }
   }
 }

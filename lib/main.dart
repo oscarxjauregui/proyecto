@@ -19,16 +19,28 @@ void main() async {
 
   // Load theme color from Firestore
   String userId = 'yourUserIdHere';
+  try {
+    Color? themeColor = await _loadThemeColorFromFirestore(userId);
+    if (themeColor != null) {
+      AppValueNotifier.setTheme(themeColor);
+    }
+  } catch (e) {
+    print('Error loading theme color: $e');
+    // Handle error loading theme color
+  }
+
+  runApp(const MyApp());
+}
+
+Future<Color?> _loadThemeColorFromFirestore(String userId) async {
   final userSnapshot =
       await FirebaseFirestore.instance.collection('users').doc(userId).get();
   if (userSnapshot.exists) {
     final userData = userSnapshot.data() as Map<String, dynamic>;
-    Color themeColor =
-        AppValueNotifier.getColorFromString(userData['color'] ?? 'blue');
-    AppValueNotifier.setTheme(themeColor);
+    return AppValueNotifier.getColorFromString(userData['color'] ?? 'blue');
+  } else {
+    throw Exception('User not found');
   }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

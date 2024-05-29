@@ -34,6 +34,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
   String? userEmail;
   String? avatarUrl;
   String? userRole;
+  String? userColor;
   File? _image;
   final picker = ImagePicker();
   final _descriptionController = TextEditingController();
@@ -52,6 +53,7 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
         userName = userData['nombre'];
         userEmail = userData['email'];
         userRole = userData['rol'];
+        userColor = userData['color']; // Obtén el color del usuario
       });
       final avatarSnapshot =
           await AvatarFirebase().consultarAvatar(widget.myIdUser);
@@ -175,7 +177,10 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           'SocialLynx',
           style: GoogleFonts.lobster(
             // Usando la fuente 'Lobster' para el título
-            color: Theme.of(context).primaryColor,
+            // color: Theme.of(context).primaryColor,
+            color: userColor != null
+                ? _convertColorStringToColor(userColor!)
+                : Theme.of(context).primaryColor,
             fontSize: 35,
             fontWeight: FontWeight.bold,
           ),
@@ -215,6 +220,11 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
                     ),
               accountName: Text(userName ?? 'Cargando...'),
               accountEmail: Text(userEmail ?? 'Cargando...'),
+              decoration: BoxDecoration(
+                color: userColor != null
+                    ? _convertColorStringToColor(userColor!)
+                    : Theme.of(context).primaryColor,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.person_outlined,
@@ -638,6 +648,22 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
         }
       },
     );
+  }
+
+  Color _convertColorStringToColor(String colorString) {
+    switch (colorString.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      // Agrega más colores según sea necesario
+      default:
+        return Colors.black; // Color por defecto
+    }
   }
 
   Future<void> _showPdf(BuildContext context, String pdfUrl) async {
