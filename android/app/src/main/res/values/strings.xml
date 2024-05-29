@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="facebook_app_id">705272718321406</string>
+    <string name="fb_login_protocol_scheme">fb705272718321406</string>
+    <string name="facebook_client_token">8fcd4a4a5c39d0722aa53c6d0985754a</string>
+    <string name="app_name">"SocialLynx"</string>
+
+</resources>

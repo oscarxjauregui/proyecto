@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -222,7 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SignInButton(
                 Buttons.Facebook,
-                onPressed: () {},
+                onPressed: () {
+                  signInWithFacebook();
+                },
               ),
               SignInButton(
                 Buttons.GitHub,
@@ -338,6 +341,51 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       print('Error al iniciar sesión con Google: $e');
+    }
+  }
+
+  Future<void> signInWithFacebook() async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status == LoginStatus.success) {
+        final AccessToken accessToken = result.accessToken!;
+        final AuthCredential credential =
+            FacebookAuthProvider.credential(accessToken.tokenString);
+
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+
+        // Obtener el email del usuario autenticado con Facebook
+        final String email = userCredential.user?.email ?? '';
+
+        // Consultar si el email ya está registrado en la colección 'users'
+        final userSnapshot = await _usersFirebase.consultarPorEmail(email);
+        if (userSnapshot.docs.isNotEmpty) {
+          // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeScreen
+          final userId = userSnapshot.docs.first.id;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeClienteScreen(
+                myIdUser: userId,
+              ),
+            ),
+          );
+        } else {
+          // Si el email no está registrado, navegar a la pantalla de registro
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SignUpScreen(),
+            ),
+          );
+        }
+      } else {
+        // Manejar otros estados de resultado, e.g., LoginStatus.cancelled, LoginStatus.failed
+        print('Error al iniciar sesión con Facebook: ${result.status}');
+      }
+    } catch (e) {
+      print('Error al iniciar sesión con Facebook: $e');
     }
   }
 }
