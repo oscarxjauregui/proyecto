@@ -34,4 +34,13 @@ class UsersFirebase {
     final documentSnapshot = await _usersCollection!.doc(id).get();
     return documentSnapshot;
   }
+
+  Future<String> insertarObtId(Map<String, dynamic> data) async {
+    try {
+      DocumentReference docRef = await _usersCollection!.add(data);
+      return docRef.id;
+    } catch (e) {
+      throw 'Error al insertar en Firestore: $e';
+    }
+  }
 }

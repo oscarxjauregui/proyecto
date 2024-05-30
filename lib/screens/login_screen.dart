@@ -11,6 +11,7 @@ import 'package:proyecto/screens/home_man_screen.dart';
 import 'package:proyecto/screens/recuperacionPass.dart';
 import 'package:proyecto/screens/reesend_code.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
+import 'package:proyecto/screens/signup_auth_screen.dart';
 import 'package:proyecto/services/email_auth_firebase.dart';
 import 'package:proyecto/services/user_firebase.dart';
 
@@ -313,8 +314,10 @@ class _LoginScreenState extends State<LoginScreen> {
         final UserCredential userCredential =
             await FirebaseAuth.instance.signInWithCredential(credential);
 
-        // Obtener el email del usuario autenticado con Google
+        // Obtener los datos del usuario autenticado con Google
         final String email = userCredential.user?.email ?? '';
+        final String? name = userCredential.user?.displayName;
+        final String? photoUrl = userCredential.user?.photoURL;
 
         // Consultar si el email ya está registrado en la colección 'users'
         final userSnapshot = await _usersFirebase.consultarPorEmail(email);
@@ -330,11 +333,15 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         } else {
-          // Si el email no está registrado, navegar a la pantalla de registro
+          // Si el email no está registrado, navegar a la pantalla de registro con los datos de Google
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SignUpScreen(),
+              builder: (context) => SignUpAuthScreen(
+                email: email,
+                nombre: name ?? '',
+                fotoUrl: photoUrl ?? '',
+              ),
             ),
           );
         }
