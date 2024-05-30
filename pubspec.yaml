@@ -65,6 +65,9 @@ dependencies:
   firebase_app_installations: ^0.2.5+5
   flutter_facebook_auth:
   cache_manager: ^1.0.0+4
+  cached_network_image:
+  connectivity:
+  flutter_cache_manager:
 
 
 dev_dependencies:

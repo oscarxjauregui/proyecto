@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:advance_pdf_viewer_fork/advance_pdf_viewer_fork.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -209,8 +211,20 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           children: [
             UserAccountsDrawerHeader(
               currentAccountPicture: avatarUrl != null
-                  ? CircleAvatar(
-                      backgroundImage: NetworkImage(avatarUrl!),
+                  // ? CircleAvatar(
+                  //     backgroundImage: NetworkImage(avatarUrl!),
+                  //   )
+                  ? CachedNetworkImage(
+                      imageUrl: avatarUrl!,
+                      placeholder: (context, url) => CircleAvatar(
+                        child: Icon(Icons.person, size: 40),
+                      ),
+                      errorWidget: (context, url, error) => CircleAvatar(
+                        child: Icon(
+                          Icons.error,
+                          size: 40,
+                        ),
+                      ),
                     )
                   : CircleAvatar(
                       child: Icon(
@@ -394,22 +408,49 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
+      body: FutureBuilder(
+        future: _checkInternetConnection(),
+        builder: (context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            if (snapshot.data!) {
+              // Hay conexión a internet
+              return Column(
                 children: [
-                  _buildCreatePostSection(),
-                  SizedBox(height: 20),
-                  _buildPostsList(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildCreatePostSection(),
+                          SizedBox(height: 20),
+                          _buildPostsList(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-        ],
+              );
+            } else {
+              // No hay conexión a internet
+              return Center(
+                child: Text(
+                  'No estás conectado a internet',
+                  style: TextStyle(fontSize: 20),
+                ),
+              );
+            }
+          }
+        },
       ),
     );
+  }
+
+  Future<bool> _checkInternetConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    return connectivityResult != ConnectivityResult.none;
   }
 
   Widget _buildCreatePostSection() {
