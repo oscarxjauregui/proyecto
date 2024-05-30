@@ -68,6 +68,7 @@ dependencies:
   cached_network_image:
   connectivity:
   flutter_cache_manager:
+  awesome_notifications:
 
 
 dev_dependencies:

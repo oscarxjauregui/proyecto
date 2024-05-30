@@ -1,3 +1,4 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -81,77 +82,6 @@ class _MyUserScreenState extends State<MyUserScreen> {
     }
   }
 
-  Future<void> _subscribeToTheme() async {
-    try {
-      // Implementa aquí la lógica para suscribir al usuario al tema en Firebase
-      // Por ejemplo, puedes usar Firebase Cloud Messaging para enviar notificaciones
-      // relacionadas con el tema seleccionado.
-      // Implementa la lógica según la estructura de tu base de datos en Firestore.
-      // Aquí tienes un ejemplo básico de cómo suscribir al usuario al tema:
-
-      // Primero, obtén una referencia a la colección de temas en Firebase
-      final themeCollection = FirebaseFirestore.instance.collection('themes');
-
-      // Luego, actualiza los datos del usuario para incluir la suscripción al tema
-      await themeCollection.doc(widget.userId).update({'subscribed': true});
-
-      // Puedes agregar aquí cualquier otra lógica necesaria, como enviar una notificación o realizar otras acciones relacionadas con la suscripción al tema.
-
-      // Muestra un mensaje de éxito al usuario
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Te has suscrito al tema correctamente'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      print('Error al suscribir al tema: $e');
-      // Maneja cualquier error que pueda ocurrir durante la suscripción al tema
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Hubo un error al suscribirte al tema'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<void> _subscribeToMessaging() async {
-    try {
-      // Implementa aquí la lógica para suscribir al usuario al servicio de mensajería
-      // Puedes utilizar Firebase Cloud Messaging o cualquier otro servicio de mensajería.
-      // Implementa la lógica según sea necesario para tus requerimientos.
-      // Aquí tienes un ejemplo básico de cómo suscribir al usuario al servicio de mensajería:
-
-      // Primero, obtén una referencia al servicio de mensajería en Firebase
-      final messagingService = FirebaseMessaging.instance;
-
-      // Luego, suscribe al usuario al servicio de mensajería
-      await messagingService.subscribeToTopic('general');
-
-      // Puedes agregar aquí cualquier otra lógica necesaria, como enviar una notificación o realizar otras acciones relacionadas con la suscripción al servicio de mensajería.
-
-      // Muestra un mensaje de éxito al usuario
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Te has suscrito al servicio de mensajería correctamente'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      print('Error al suscribir al servicio de mensajería: $e');
-      // Maneja cualquier error que pueda ocurrir durante la suscripción al servicio de mensajería
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Hubo un error al suscribirte al servicio de mensajería'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,15 +103,16 @@ class _MyUserScreenState extends State<MyUserScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.subscriptions), // Ícono de suscripción al tema
-            onPressed:
-                _subscribeToTheme, // Lógica para suscribir al usuario al tema
+            onPressed: () {
+              _subscribeNot1();
+            },
+            icon: Icon(Icons.add_circle_rounded),
           ),
           IconButton(
-            icon: Icon(Icons
-                .message), // Ícono de suscripción al servicio de mensajería
-            onPressed:
-                _subscribeToMessaging, // Lógica para suscribir al usuario al servicio de mensajería
+            onPressed: () {
+              _subscribeNot2();
+            },
+            icon: Icon(Icons.add_circle_outline_sharp),
           ),
         ],
       ),
@@ -280,5 +211,45 @@ class _MyUserScreenState extends State<MyUserScreen> {
         ),
       ),
     );
+  }
+
+  void _subscribeNot1() async {
+    await FirebaseMessaging.instance
+        .subscribeToTopic('hola1')
+        .then((value) => print('Suscrito a los hola 1 :)'));
+
+    await FirebaseMessaging.instance.unsubscribeFromTopic('hola2');
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 1,
+          channelKey: 'key1',
+          title: message.notification?.title,
+          body: message.notification?.body,
+        ),
+      );
+    });
+  }
+
+  void _subscribeNot2() async {
+    await FirebaseMessaging.instance
+        .subscribeToTopic('hola2')
+        .then((value) => print('Suscrito a los hola 2 :)'));
+
+    await FirebaseMessaging.instance
+        .unsubscribeFromTopic('hola1')
+        .then((value) => print('Desuscrito al hola :)'));
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 1,
+          channelKey: 'key1',
+          title: message.notification?.title,
+          body: message.notification?.body,
+        ),
+      );
+    });
   }
 }
