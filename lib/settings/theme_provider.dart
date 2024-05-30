@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto/settings/app_value_notifier.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
-class ThemeProvider extends StatelessWidget {
-  final Widget child;
+class ThemeProvider with ChangeNotifier {
+  late ThemeData _themeData;
 
-  const ThemeProvider({Key? key, required this.child}) : super(key: key);
+  ThemeProvider() {
+    _themeData = ThemeData.light();
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: AppValueNotifier.themeNotifier,
-      builder: (context, ThemeData theme, child) {
-        return MaterialApp(
-          theme: theme,
-          debugShowCheckedModeBanner: false,
-          home: child,
-        );
-      },
-      child: child,
-    );
+  ThemeData getTheme() => _themeData;
+
+  void setThemeMode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.dark:
+        _themeData = ThemeData.dark();
+        break;
+      case ThemeMode.light:
+        _themeData = ThemeData.light();
+        break;
+      case ThemeMode.system:
+        Brightness platformBrightness =
+            SchedulerBinding.instance!.platformDispatcher.platformBrightness;
+        _themeData = platformBrightness == Brightness.dark
+            ? ThemeData.dark()
+            : ThemeData.light();
+        break;
+    }
+    notifyListeners();
   }
 }

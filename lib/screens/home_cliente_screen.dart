@@ -211,20 +211,10 @@ class _HomeClienteScreenState extends State<HomeClienteScreen> {
           children: [
             UserAccountsDrawerHeader(
               currentAccountPicture: avatarUrl != null
-                  // ? CircleAvatar(
-                  //     backgroundImage: NetworkImage(avatarUrl!),
-                  //   )
-                  ? CachedNetworkImage(
-                      imageUrl: avatarUrl!,
-                      placeholder: (context, url) => CircleAvatar(
-                        child: Icon(Icons.person, size: 40),
-                      ),
-                      errorWidget: (context, url, error) => CircleAvatar(
-                        child: Icon(
-                          Icons.error,
-                          size: 40,
-                        ),
-                      ),
+                  ? CircleAvatar(
+                      backgroundImage: CachedNetworkImageProvider(avatarUrl!),
+                      // Placeholder para mostrar mientras se carga la imagen
+                      // child: CircularProgressIndicator(),
                     )
                   : CircleAvatar(
                       child: Icon(
