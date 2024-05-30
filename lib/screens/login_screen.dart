@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
@@ -229,7 +230,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SignInButton(
                 Buttons.GitHub,
-                onPressed: () {},
+                onPressed: () {
+                  signInWithGithub();
+                },
               ),
               const SizedBox(height: 10),
               TextButton(
@@ -386,6 +389,45 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       print('Error al iniciar sesión con Facebook: $e');
+    }
+  }
+
+  Future<void> signInWithGithub() async {
+    try {
+      // Crear una instancia del proveedor de autenticación de GitHub
+      GithubAuthProvider githubAuthProvider = GithubAuthProvider();
+
+      // Iniciar sesión con el proveedor de autenticación de GitHub
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithProvider(githubAuthProvider);
+
+      // Obtener el email del usuario autenticado con GitHub
+      final String email = userCredential.user?.email ?? '';
+
+      // Consultar si el email ya está registrado en la colección 'users'
+      final userSnapshot = await _usersFirebase.consultarPorEmail(email);
+      if (userSnapshot.docs.isNotEmpty) {
+        // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeClienteScreen
+        final userId = userSnapshot.docs.first.id;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeClienteScreen(
+              myIdUser: userId,
+            ),
+          ),
+        );
+      } else {
+        // Si el email no está registrado, navegar a la pantalla de registro
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SignUpScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error al iniciar sesión con GitHub: $e');
     }
   }
 }
