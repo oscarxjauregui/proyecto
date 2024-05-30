@@ -69,6 +69,7 @@ dependencies:
   connectivity:
   flutter_cache_manager:
   awesome_notifications:
+  firebase_analytics:
 
 
 dev_dependencies:

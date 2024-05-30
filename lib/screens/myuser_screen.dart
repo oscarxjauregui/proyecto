@@ -21,11 +21,13 @@ class _MyUserScreenState extends State<MyUserScreen> {
   late String _userRole = '';
   late String _userAvatarUrl = '';
   late Color _userColor = Colors.blue; // Default color
+  bool _isSubscribed = false; // State to track subscription status
 
   @override
   void initState() {
     super.initState();
     _getUserData();
+    _initializeFirebaseMessaging();
   }
 
   Future<void> _getUserData() async {
@@ -43,6 +45,8 @@ class _MyUserScreenState extends State<MyUserScreen> {
           _userColor =
               AppValueNotifier.getColorFromString(userData['color'] ?? 'blue');
           AppValueNotifier.setTheme(_userColor);
+          _isSubscribed =
+              (userData['subscribedTopics'] ?? []).contains('director');
         });
       }
 
@@ -82,6 +86,58 @@ class _MyUserScreenState extends State<MyUserScreen> {
     }
   }
 
+  Future<void> _toggleSubscription() async {
+    if (_isSubscribed) {
+      await FirebaseMessaging.instance
+          .unsubscribeFromTopic('director')
+          .then((value) => print('Desuscrito del director'));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .update({
+        'subscribedTopics': FieldValue.arrayRemove(['director'])
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Dejaste de recibir mensajes del director'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      await FirebaseMessaging.instance
+          .subscribeToTopic('director')
+          .then((value) => print('Suscrito al director'));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .update({
+        'subscribedTopics': FieldValue.arrayUnion(['director'])
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Suscrito para recibir mensajes del director'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    setState(() {
+      _isSubscribed = !_isSubscribed;
+    });
+  }
+
+  void _initializeFirebaseMessaging() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 1,
+          channelKey: 'key1',
+          title: message.notification?.title,
+          body: message.notification?.body,
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,20 +157,6 @@ class _MyUserScreenState extends State<MyUserScreen> {
             );
           },
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              _subscribeNot1();
-            },
-            icon: Icon(Icons.add_circle_rounded),
-          ),
-          IconButton(
-            onPressed: () {
-              _subscribeNot2();
-            },
-            icon: Icon(Icons.add_circle_outline_sharp),
-          ),
-        ],
       ),
       body: Center(
         child: Padding(
@@ -185,6 +227,13 @@ class _MyUserScreenState extends State<MyUserScreen> {
                   _colorOption(Colors.red, 'red'),
                 ],
               ),
+              SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _toggleSubscription,
+                child: Text(_isSubscribed
+                    ? 'Dejar de recibir mensajes del director'
+                    : 'Recibir mensajes del director'),
+              ),
             ],
           ),
         ),
@@ -211,45 +260,5 @@ class _MyUserScreenState extends State<MyUserScreen> {
         ),
       ),
     );
-  }
-
-  void _subscribeNot1() async {
-    await FirebaseMessaging.instance
-        .subscribeToTopic('hola1')
-        .then((value) => print('Suscrito a los hola 1 :)'));
-
-    await FirebaseMessaging.instance.unsubscribeFromTopic('hola2');
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: 1,
-          channelKey: 'key1',
-          title: message.notification?.title,
-          body: message.notification?.body,
-        ),
-      );
-    });
-  }
-
-  void _subscribeNot2() async {
-    await FirebaseMessaging.instance
-        .subscribeToTopic('hola2')
-        .then((value) => print('Suscrito a los hola 2 :)'));
-
-    await FirebaseMessaging.instance
-        .unsubscribeFromTopic('hola1')
-        .then((value) => print('Desuscrito al hola :)'));
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      AwesomeNotifications().createNotification(
-        content: NotificationContent(
-          id: 1,
-          channelKey: 'key1',
-          title: message.notification?.title,
-          body: message.notification?.body,
-        ),
-      );
-    });
   }
 }

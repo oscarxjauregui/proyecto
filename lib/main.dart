@@ -1,3 +1,4 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,6 +17,19 @@ void main() async {
     ),
   );
   await FirebaseApi().initNotifications();
+
+  AwesomeNotifications().initialize(
+    'resource://drawable/res_app_icon', // Reemplaza esto con el icono correcto
+    [
+      NotificationChannel(
+        channelKey: 'key1',
+        channelName: 'Basic notifications',
+        channelDescription: 'Notification channel for basic tests',
+        defaultColor: Color(0xFF9D50DD),
+        ledColor: Colors.white,
+      ),
+    ],
+  );
 
   // Load theme color from Firestore
   String userId = 'yourUserIdHere';
