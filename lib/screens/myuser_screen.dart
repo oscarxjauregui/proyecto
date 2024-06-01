@@ -142,7 +142,12 @@ class _MyUserScreenState extends State<MyUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mi perfil'),
+        title: Text(
+          'Mi perfil',
+          style: GoogleFonts.lobster(
+            fontSize: 35,
+          ),
+        ),
         backgroundColor: _userColor,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
