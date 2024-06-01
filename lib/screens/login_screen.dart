@@ -13,6 +13,7 @@ import 'package:proyecto/screens/reesend_code.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
 import 'package:proyecto/screens/signup_auth_screen.dart';
 import 'package:proyecto/services/email_auth_firebase.dart';
+import 'package:proyecto/services/signInWithGoogle.dart';
 import 'package:proyecto/services/user_firebase.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -219,16 +220,25 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SignInButton(
                 Buttons.Google,
-                onPressed: () {
-                  //   signInWithGoogle();
+                onPressed: () async {
+                  User? user = await signInWithGoogle();
+                  if (user != null) {
+                    // El usuario ha iniciado sesión correctamente
+                    print('Signed in: ${user.displayName}');
+                  } else {
+                    // Falló el inicio de sesión
+                    print('Failed to sign in with Google');
+                  }
                 },
               ),
-              SignInButton(
+             SignInButton(
                 Buttons.Facebook,
                 onPressed: () {
-                  //   signInWithFacebook();
+                  signInWithFacebook(
+                      context); // Llamada a la función signInWithFacebook()
                 },
               ),
+
               SignInButton(
                 Buttons.GitHub,
                 onPressed: () {
@@ -297,5 +307,24 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<void> signInWithFacebook(BuildContext context) async {
+  try {
+    // Iniciar sesión con Facebook
+    final LoginResult result = await FacebookAuth.instance.login();
+
+    // Verificar si el usuario inició sesión correctamente
+    if (result.status == LoginStatus.success) {
+      // El usuario ha iniciado sesión correctamente
+      print('Usuario ha iniciado sesión con Facebook!');
+    } else {
+      // El usuario canceló el inicio de sesión
+      print('El usuario canceló el inicio de sesión o ocurrió un error');
+    }
+  } catch (e) {
+    // Manejar error
+    print('Error al iniciar sesión con Facebook: $e');
   }
 }
