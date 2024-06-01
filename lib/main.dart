@@ -2,7 +2,9 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:proyecto/screens/login_screen.dart';
+
+import 'package:proyecto/screens/onboarding.dart';
+
 import 'package:proyecto/services/firebaseapi.dart';
 import 'package:proyecto/settings/app_value_notifier.dart';
 
@@ -68,7 +70,12 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: themeData,
-          home: const LoginScreen(),
+          home: Builder(
+            builder: (BuildContext context) {
+              final screenHeight = MediaQuery.of(context).size.height;
+              return Onboarding(screenHeight: screenHeight);
+            },
+          ),
         );
       },
     );
