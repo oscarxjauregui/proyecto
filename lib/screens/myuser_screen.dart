@@ -2,6 +2,7 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:proyecto/screens/home_cliente_screen.dart';
 import 'package:proyecto/screens/select_avatar_screen.dart';
 import 'package:proyecto/settings/app_value_notifier.dart';
@@ -77,7 +78,7 @@ class _MyUserScreenState extends State<MyUserScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Color actualizado'),
+          content: const Text('Color actualizado'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -98,7 +99,7 @@ class _MyUserScreenState extends State<MyUserScreen> {
         'subscribedTopics': FieldValue.arrayRemove(['director'])
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Dejaste de recibir mensajes del director'),
           duration: Duration(seconds: 2),
         ),
@@ -114,7 +115,7 @@ class _MyUserScreenState extends State<MyUserScreen> {
         'subscribedTopics': FieldValue.arrayUnion(['director'])
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Suscrito para recibir mensajes del director'),
           duration: Duration(seconds: 2),
         ),
@@ -138,7 +139,6 @@ class _MyUserScreenState extends State<MyUserScreen> {
     });
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

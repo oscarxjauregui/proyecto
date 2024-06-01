@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:proyecto/screens/Home_cliente_screen.dart';
+import 'package:proyecto/screens/home_man_screen.dart';
 import 'package:proyecto/screens/recuperacionPass.dart';
 import 'package:proyecto/screens/reesend_code.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
@@ -21,19 +23,37 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _authFirebase = EmailAuthFirebase();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _usersFirebase = UsersFirebase();
+  final EmailAuthFirebase _authFirebase = EmailAuthFirebase();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final UsersFirebase _usersFirebase = UsersFirebase();
 
   @override
   Widget build(BuildContext context) {
     final txtEmail = TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
+      style: const TextStyle(
+        fontSize: 16,
+        color: Colors.black,
+      ),
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        hintText: 'Ingresa el correo',
         labelText: 'Correo institucional',
-        prefixIcon: Icon(Icons.email),
+        hintStyle: const TextStyle(
+          color: Colors.grey,
+          fontSize: 14,
+        ),
+        labelStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
+        prefixIcon: const Icon(Icons.email, color: Colors.green),
       ),
     );
 
@@ -41,17 +61,39 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: _passwordController,
       keyboardType: TextInputType.text,
       obscureText: true,
+      style: const TextStyle(
+        fontSize: 16,
+        color: Colors.black,
+      ),
       decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        hintText: 'Ingresa la contraseña',
         labelText: 'Contraseña',
-        prefixIcon: Icon(Icons.lock),
+        hintStyle: const TextStyle(
+          color: Colors.grey,
+          fontSize: 14,
+        ),
+        labelStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
+        prefixIcon: const Icon(Icons.lock, color: Colors.green),
       ),
     );
 
     return Scaffold(
       body: Container(
-        padding: EdgeInsets.all(20),
+        color: Colors.blue,
+        padding: const EdgeInsets.all(20),
+        height: MediaQuery.of(context).size.height,
+        width: MediaQuery.of(context).size.width,
         child: SingleChildScrollView(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -62,42 +104,138 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Image.asset(
                 'lib/assets/images/SL1.png',
                 height: 200,
                 width: 100,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               txtEmail,
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               txtPassword,
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () async {
-                  // Your login logic here
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  if (email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Por favor, llena todos los campos'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final success = await _authFirebase.signInUser(
+                      email: email,
+                      password: password,
+                    );
+                    if (success) {
+                      final userSnapshot =
+                          await _usersFirebase.consultarPorEmail(email);
+                      if (userSnapshot.docs.isNotEmpty) {
+                        final userData = userSnapshot.docs.first.data()
+                            as Map<String, dynamic>?;
+                        final userRole = userData?['rol'];
+                        if (userRole != null) {
+                          final userId = userSnapshot.docs.first.id;
+                          if (userRole == 'Estudiante') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomeClienteScreen(
+                                  myIdUser: userId,
+                                ),
+                              ),
+                            );
+                          } else if (userRole == 'Maestro') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomeClienteScreen(
+                                  myIdUser: userId,
+                                ),
+                              ),
+                            );
+                          } else {
+                            print('Error: Rol de usuario no reconocido');
+                          }
+                        } else {
+                          print('Error: Rol de usuario no encontrado');
+                        }
+                      } else {
+                        print(
+                            'Error: No se encontró ningún usuario con el correo electrónico proporcionado');
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Error al iniciar sesión'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (e is FirebaseAuthException) {
+                      String errorMessage;
+                      if (e.code == 'user-not-found' ||
+                          e.code == 'wrong-password') {
+                        errorMessage =
+                            'Correo electrónico o contraseña incorrectos';
+                      } else {
+                        errorMessage = 'El email o contraseña son incorrectos';
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(errorMessage),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('El email o contraseña son incorrectos'),
+                        ),
+                      );
+                    }
+                  }
                 },
-                child: Text('Iniciar sesión'),
+                child: const Text('Iniciar sesión'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               SignInButton(
                 Buttons.Google,
                 onPressed: () {
-                  // Google sign in logic here
+                  //   signInWithGoogle();
                 },
               ),
               SignInButton(
                 Buttons.Facebook,
                 onPressed: () {
-                  // Facebook sign in logic here
+                  //   signInWithFacebook();
                 },
               ),
               SignInButton(
                 Buttons.GitHub,
                 onPressed: () {
-                  // Github sign in logic here
+                  //  signInWithGithub();
                 },
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -107,7 +245,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-                child: Text('Crear cuenta'),
+                child: const Text('Crear cuenta'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -118,7 +264,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-                child: Text('Olvidé mi contraseña'),
+                child: const Text('Olvidé mi contraseña'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -129,151 +283,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-                child: Text('Reenviar código de autenticación'),
-              ),
+                child: const Text('Reenviar código de autenticación'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              )
             ],
           ),
         ),
       ),
     );
-  }
-
-  Future<void> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        final UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-
-        // Obtener los datos del usuario autenticado con Google
-        final String email = userCredential.user?.email ?? '';
-        final String? name = userCredential.user?.displayName;
-        final String? photoUrl = userCredential.user?.photoURL;
-
-        // Consultar si el email ya está registrado en la colección 'users'
-        final userSnapshot = await _usersFirebase.consultarPorEmail(email);
-        if (userSnapshot.docs.isNotEmpty) {
-          // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeScreen
-          final userId = userSnapshot.docs.first.id;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeClienteScreen(
-                myIdUser: userId,
-              ),
-            ),
-          );
-        } else {
-          // Si el email no está registrado, navegar a la pantalla de registro con los datos de Google
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SignUpAuthScreen(
-                email: email,
-                nombre: name ?? '',
-                fotoUrl: photoUrl ?? '',
-              ),
-            ),
-          );
-        }
-      } else {
-        // Manejar error, e.g., mostrar snackbar
-        print('Error al iniciar sesión con Google');
-      }
-    } catch (e) {
-      print('Error al iniciar sesión con Google: $e');
-    }
-  }
-
-  Future<void> signInWithFacebook() async {
-    try {
-      final LoginResult result = await FacebookAuth.instance.login();
-      if (result.status == LoginStatus.success) {
-        final AccessToken accessToken = result.accessToken!;
-        final AuthCredential credential =
-            FacebookAuthProvider.credential(accessToken.tokenString);
-
-        final UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-
-        // Obtener el email del usuario autenticado con Facebook
-        final String email = userCredential.user?.email ?? '';
-
-        // Consultar si el email ya está registrado en la colección 'users'
-        final userSnapshot = await _usersFirebase.consultarPorEmail(email);
-        if (userSnapshot.docs.isNotEmpty) {
-          // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeScreen
-          final userId = userSnapshot.docs.first.id;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeClienteScreen(
-                myIdUser: userId,
-              ),
-            ),
-          );
-        } else {
-          // Si el email no está registrado, navegar a la pantalla de registro
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SignUpScreen(),
-            ),
-          );
-        }
-      } else {
-        // Manejar otros estados de resultado, e.g., LoginStatus.cancelled, LoginStatus.failed
-        print('Error al iniciar sesión con Facebook: ${result.status}');
-      }
-    } catch (e) {
-      print('Error al iniciar sesión con Facebook: $e');
-    }
-  }
-
-  Future<void> signInWithGithub() async {
-    try {
-      // Crear una instancia del proveedor de autenticación de GitHub
-      GithubAuthProvider githubAuthProvider = GithubAuthProvider();
-
-      // Iniciar sesión con el proveedor de autenticación de GitHub
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithProvider(githubAuthProvider);
-
-      // Obtener el email del usuario autenticado con GitHub
-      final String email = userCredential.user?.email ?? '';
-
-      // Consultar si el email ya está registrado en la colección 'users'
-      final userSnapshot = await _usersFirebase.consultarPorEmail(email);
-      if (userSnapshot.docs.isNotEmpty) {
-        // Si el email ya está registrado, obtener el ID del usuario y navegar a HomeClienteScreen
-        final userId = userSnapshot.docs.first.id;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeClienteScreen(
-              myIdUser: userId,
-            ),
-          ),
-        );
-      } else {
-        // Si el email no está registrado, navegar a la pantalla de registro
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SignUpScreen(),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error al iniciar sesión con GitHub: $e');
-    }
   }
 }
