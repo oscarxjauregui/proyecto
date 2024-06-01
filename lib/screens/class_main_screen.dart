@@ -101,7 +101,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
     if (_image == null && (description == null || description.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: const Text(
               'Por favor, selecciona una imagen o ingresa una descripción antes de publicar.'),
         ),
       );
@@ -357,7 +357,7 @@ class _ClassMainScreenState extends State<ClassMainScreen> {
                         backgroundImage:
                             avatarUrl != null ? NetworkImage(avatarUrl) : null,
                         child: avatarUrl == null
-                            ? Icon(
+                            ? const Icon(
                                 Icons.person,
                                 size: 40,
                               )

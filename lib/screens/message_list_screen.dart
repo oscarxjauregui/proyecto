@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart'; // Importa Google Fonts
 import 'package:proyecto/screens/message_screen.dart';
 import 'package:proyecto/services/avatar_firebase.dart';
 
@@ -23,9 +24,24 @@ class _MessageListScreenState extends State<MessageListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mensajes'),
+        title: Text(
+          'Mensajes',
+          style: GoogleFonts.lobster(
+            // Utiliza Google Fonts para el título
+            textStyle: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        backgroundColor: const Color.fromARGB(
+            255, 221, 219, 219), // Cambia el color del AppBar a gris
       ),
-      body: _buildMessageList(),
+      body: Container(
+        color: const Color.fromARGB(255, 186, 215,
+            191), // Cambia el color de fondo de la lista a azul claro
+        child: _buildMessageList(),
+      ),
     );
   }
 
@@ -128,7 +144,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
             future: _avatarFirebase.consultarAvatar(otherUserId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircleAvatar(
+                return const CircleAvatar(
                   child: Icon(
                     Icons.person,
                     size: 35,
@@ -136,7 +152,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
                 );
               }
               if (snapshot.hasError) {
-                return CircleAvatar(
+                return const CircleAvatar(
                   child: Icon(
                     Icons.person,
                     size: 35,
@@ -152,7 +168,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
                       NetworkImage(avatarData['imageUrl'] as String),
                 );
               } else {
-                return CircleAvatar(
+                return const CircleAvatar(
                   child: Icon(
                     Icons.person,
                     size: 35,
@@ -161,7 +177,16 @@ class _MessageListScreenState extends State<MessageListScreen> {
               }
             },
           ),
-          title: Text(userName),
+          title: Text(
+            userName,
+            style: GoogleFonts.getFont(
+              'Roboto',
+              textStyle: const TextStyle(
+                fontSize: 20, // Tamaño de fuente personalizado
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -173,6 +198,10 @@ class _MessageListScreenState extends State<MessageListScreen> {
                 ),
             ],
           ),
+          trailing: const Icon(
+            Icons.message,
+            color: Colors.blue, // Color del icono de mensaje
+          ), // Icono de mensaje en el lado derecho
         ),
       ),
     );
