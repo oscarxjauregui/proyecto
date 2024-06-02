@@ -71,6 +71,7 @@ dependencies:
   awesome_notifications:
   firebase_analytics:
   page_transition:
+  flutter_web_auth:
 
 dev_dependencies:
   flutter_test:

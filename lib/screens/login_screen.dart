@@ -13,6 +13,7 @@ import 'package:proyecto/screens/reesend_code.dart';
 import 'package:proyecto/screens/signUp_screen.dart';
 import 'package:proyecto/screens/signup_auth_screen.dart';
 import 'package:proyecto/services/email_auth_firebase.dart';
+import 'package:proyecto/services/sigInWithGithub.dart';
 import 'package:proyecto/services/signInWithGoogle.dart';
 import 'package:proyecto/services/user_firebase.dart';
 
@@ -231,18 +232,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                 },
               ),
-             SignInButton(
+              SignInButton(
                 Buttons.Facebook,
                 onPressed: () {
                   signInWithFacebook(
                       context); // Llamada a la función signInWithFacebook()
                 },
               ),
-
               SignInButton(
                 Buttons.GitHub,
-                onPressed: () {
-                  //  signInWithGithub();
+                onPressed: () async {
+                  String? accessToken = await GitHubAuth.authenticate();
+                  if (accessToken != null) {
+                    // Aquí puedes hacer algo con el accessToken, por ejemplo,
+                    // autenticar al usuario en tu aplicación o realizar otras acciones.
+                  } else {
+                    // Manejo de errores o acciones adicionales si la autenticación falla.
+                  }
                 },
               ),
               const SizedBox(height: 10),
